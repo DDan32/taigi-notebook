@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+<rect width="180" height="180" fill="#256F45"/>
+<rect x="26" y="26" width="128" height="128" fill="#F6FAF3"/>
+<path d="M90 26v128M26 90h128" stroke="#63AD7E" stroke-width="2" stroke-dasharray="6 6" fill="none"/>
+<text x="90" y="120" font-size="88" text-anchor="middle" font-family="PingFang TC, Heiti TC, sans-serif" fill="#1C2A30">台</text>
+<path d="M52 140h76" stroke="#CF3324" stroke-width="6" stroke-linecap="round"/>
+</svg>

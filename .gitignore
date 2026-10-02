@@ -1,0 +1,10 @@
+# generated or local-only
+raw/
+dist/
+.claude/
+.DS_Store
+__pycache__/
+node_modules/
+# the official dictionary download is not redistributed here; see README
+*.ods
+*.zip

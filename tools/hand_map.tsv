@@ -1,0 +1,302 @@
+# 華語	台語漢字	台羅	備註
+# 常用功能詞的優先順序。漢字與台羅都依教育部辭典的詞目寫法；
+# build_data.py 會逐列檢查是否找得到對應詞目（台羅含空白的是詞組，不檢查）。
+# --- 代名詞
+妳	你	lí
+您	你	lí
+它	伊	i
+牠	伊	i
+她們	𪜶	in
+它們	𪜶	in
+牠們	𪜶	in
+妳們	恁	lín
+我們	阮	guán	不包含聽話的人
+我們	咱	lán	包含聽話的人
+咱們	咱	lán
+大家	逐家	ta̍k-ke
+自己	家己	ka-kī
+別人	別人	pa̍t-lâng
+# --- 指示
+這	這	tsit	後面接量詞或名詞
+這	這	tse	單獨當主語、賓語
+那	彼	hit	後面接量詞或名詞
+那	彼	he	單獨當主語、賓語
+這個	這个	tsit ê
+這個	這	tse
+那個	彼个	hit ê
+那個	彼	he
+這些	遮的	tsia--ê
+那些	遐的	hia--ê
+這裡	遮	tsia
+那裡	遐	hia
+這樣	按呢	án-ne
+那樣	按呢	án-ne
+這麼	遮爾	tsiah-nī
+那麼	遐爾	hiah-nī
+# --- 疑問
+什麼	啥物	siánn-mih
+什麼	啥	siánn
+誰	啥人	siánn-lâng
+哪裡	佗位	tó-uī
+哪裡	佗	toh	用在句尾
+哪	佗	tó
+怎麼	按怎	án-tsuánn
+怎麼	哪會	ná ē	怎麼會
+怎樣	按怎	án-tsuánn
+怎麼樣	按怎	án-tsuánn
+為什麼	是按怎	sī-án-tsuánn
+為什麼	為啥物	uī-siánn-mih
+多少	偌濟	guā-tsē
+多久	偌久	guā-kú
+幾	幾	kuí
+什麼時候	當時	tang-sî
+# --- 否定
+不	毋	m̄	否定意願或判斷
+不	無	bô	沒有；修飾形容詞
+不	袂	bē	不會、不能
+沒	無	bô
+沒有	無	bô
+不是	毋是	m̄ sī
+不會	袂	bē
+不會	袂曉	bē-hiáu	不懂得怎麼做
+不要	莫	mài	勸阻對方
+不要	毋通	m̄-thang
+不要	無愛	bô ài	自己不想要
+不用	免	bián
+不必	免	bián
+不可以	袂使	bē-sái
+不可以	毋通	m̄-thang
+不行	袂使	bē-sái
+不能	袂當	bē-tàng
+不能	袂使	bē-sái
+還沒	猶未	iáu-buē
+沒關係	無要緊	bô iàu-kín
+別	莫	mài
+# --- 能願
+要	欲	beh	想要、將要
+要	愛	ài	需要、必須
+想要	想欲	siūnn-beh
+想	想	siūnn	思考
+想	想欲	siūnn-beh	想要
+會	會	ē
+會	會曉	ē-hiáu	懂得怎麼做
+可以	會使	ē-sái
+可以	會當	ē-tàng
+能	會當	ē-tàng
+能	會	ē
+應該	應該	ing-kai
+必須	著愛	tio̍h-ài
+喜歡	佮意	kah-ì
+喜歡	愛	ài
+# --- 介詞、副詞
+在	佇	tī	在某個地方
+在	咧	teh	正在做
+正在	當咧	tng-teh
+正在	咧	teh
+給	予	hōo
+給	共	kā	對、向
+被	予	hōo
+讓	予	hōo
+把	共	kā
+和	佮	kah
+和	和	hām
+跟	佮	kah
+跟	綴	tuè	跟隨
+與	佮	kah
+從	對	tuì
+從	按	àn
+到	到	kàu
+到	甲	kah	到…的程度
+比	比	pí
+比較	較	khah
+更	閣較	koh-khah
+最	上	siōng
+太	傷	siunn
+很	真	tsin
+很	足	tsiok
+很	誠	tsiânn
+非常	足	tsiok
+非常	非常	hui-siông
+也	嘛	mā
+也	也	iā
+都	攏	lóng
+就	就	tō
+才	才	tsiah
+又	閣	koh
+再	閣	koh
+再	才	tsiah	之後再…
+還	猶	iáu	仍然
+還	閣	koh	又、再
+還是	抑是	ia̍h-sī	或者
+還是	猶是	iáu sī	仍然是
+或者	抑是	ia̍h-sī
+或	抑是	ia̍h-sī
+已經	已經	í-king
+剛剛	拄才	tú-tsiah
+剛才	拄才	tú-tsiah
+馬上	隨	suî
+馬上	連鞭	liâm-mi
+一直	一直	it-ti̍t
+常常	定定	tiānn-tiānn
+一起	做伙	tsò-hué
+一起	鬥陣	tàu-tīn
+一定	一定	it-tīng
+可能	可能	khó-lîng
+可能	凡勢	huān-sè
+大概	大概	tāi-khài
+只	干焦	kan-na
+只有	干焦	kan-na
+只是	只是	tsí-sī
+每天	逐工	ta̍k-kang
+# --- 連接
+因為	因為	in-uī
+所以	所以	sóo-í
+但是	毋過	m̄-koh
+可是	毋過	m̄-koh
+不過	毋過	m̄-koh
+如果	若	nā
+如果	若是	nā-sī
+雖然	雖然	sui-jiân
+然後	了後	liáu-āu
+然後	紲落來	suà--lo̍h-lâi
+# --- 助詞、量詞
+的	的	ê
+的	的	--ê	句尾，或省略後面的名詞時讀輕聲
+了	矣	--ah	句尾，表示變化或完成
+了	了	liáu	動詞後面，表示做完
+嗎	無	--bô	句尾，問「有沒有、是不是」
+嗎	敢	kám	放在動詞前面：敢有…？
+嗎	乎	--honnh	向對方確認
+了嗎	未	--buē	問「…了沒」
+了沒	未	--buē	問「…了沒」
+呢	咧	--leh
+呢	呢	--neh
+吧	啦	--lah
+吧	乎	--honnh
+啊	啊	--ah
+啦	啦	--lah
+喔	喔	--ooh
+個	个	ê
+一個	一个	tsi̍t ê
+兩個	兩个	nn̄g ê
+幾個	幾个	kuí ê
+些	寡	kuá
+一些	一寡	--tsi̍t-kuá
+一點	一點仔	tsi̍t-tiám-á
+一點點	一點仔	tsi̍t-tiám-á
+一下	一下	tsi̍t-ē
+著	咧	teh	動作持續中
+過	過	kuè
+過	捌	bat	曾經，放在動詞前面
+是	是	sī
+有	有	ū
+好不好	好無	hó--bô
+# --- 常用詞
+冷	寒	kuânn	天氣冷
+冷	冷	líng	東西涼了
+熱	熱	jua̍h	天氣熱
+熱	燒	sio	東西燙、溫熱
+累	忝	thiám
+腳	跤	kha
+黑	烏	oo
+黑色	烏色	oo-sik
+打	拍	phah
+回來	轉來	tńg--lâi
+回去	轉去	tńg--khì
+回家	轉去	tńg--khì
+家	厝	tshù
+家	兜	tau	某人的家，例如「阮兜」
+謝謝	多謝	to-siā
+謝謝	感謝	kám-siā
+謝謝	勞力	lóo-la̍t
+對不起	歹勢	pháinn-sè
+對不起	失禮	sit-lé
+抱歉	歹勢	pháinn-sè
+再見	再會	tsài-huē
+你好	你好	lí hó
+早安	𠢕早	gâu-tsá
+晚安	暗安	àm-an
+請問	請問	tshiánn-mn̄g
+請問	借問	tsioh-mn̄g
+小心	細膩	sè-jī
+小心	小心	sió-sim
+厲害	𠢕	gâu
+厲害	厲害	lī-hāi
+阿嬤	阿媽	a-má
+奶奶	阿媽	a-má
+外婆	外媽	guā-má
+台語	台語	Tâi-gí
+臺語	台語	Tâi-gí
+先生	先生	sian-sinn	稱呼，也指老師、醫生
+先生	翁	ang	丈夫
+太太	太太	thài-thài	稱呼
+太太	某	bóo	妻子
+老公	翁	ang
+老婆	某	bóo
+妹妹	小妹	sió-muē
+弟弟	小弟	sió-tī
+台灣	臺灣	Tâi-uân
+臺灣	臺灣	Tâi-uân
+# --- 正反問句：台語常用「敢」放在動詞前，或句尾加「無」
+要不要	敢欲	kám beh
+是不是	敢是	kám sī
+是不是	是毋是	sī m̄ sī
+有沒有	敢有	kám ū
+會不會	敢會	kám ē
+會不會	會袂	ē bē
+可不可以	敢會使	kám ē-sái
+能不能	敢會當	kám ē-tàng
+對不對	著無	tio̍h--bô
+知不知道	敢知影	kám tsai-iánn
+喜不喜歡	敢有佮意	kám ū kah-ì
+想不想	敢想欲	kám siūnn-beh
+去不去	敢欲去	kám beh khì
+好不好	敢好	kám hó
+濕	澹	tâm
+濕	溼	sip
+溼	澹	tâm
+# --- 常用詞：同形的華語詞不是台語最自然的說法
+忙	無閒	bô-îng
+忙	忙	bâng
+好玩	心適	sim-sik
+好玩	趣味	tshù-bī
+有趣	趣味	tshù-bī
+有趣	心適	sim-sik
+住	蹛	tuà
+脫	褪	thǹg
+回	轉	tńg
+下	落	lo̍h	往下、下（雨、車）
+下	下	ē	方位
+醜	䆀	bái
+髒	垃圾	lah-sap
+晚	晏	uànn	時間晚、遲
+晚	暗	àm	天色暗
+對	著	tio̍h	正確
+對	對	tuì	向、對待
+錯	毋著	m̄-tio̍h
+錯	錯	tshò
+不對	毋著	m̄-tio̍h
+難	僫	oh
+孩子	囡仔	gín-á
+孩子	囝	kiánn	自己的小孩
+男孩	查埔囡仔	tsa-poo gín-á
+女孩	查某囡仔	tsa-bóo gín-á
+男生	查埔	tsa-poo
+女生	查某	tsa-bóo
+家人	厝內人	tshù-lāi-lâng
+蛋	卵	nn̄g
+餅乾	餅	piánn
+這次	這擺	tsit pái
+告訴	講	kóng	告訴他＝共伊講
+帶	紮	tsah	帶東西
+帶	𤆬	tshuā	帶人
+帶	帶	tuà
+對於	對	tuì
+由於	因為	in-uī
+一樣	仝款	kāng-khuán
+不一樣	無仝款	bô kāng-khuán
+好像	敢若	kánn-ná
+好像	親像	tshin-tshiūnn
+沒辦法	無法度	bô-huat-tōo
+有辦法	有法度	ū-huat-tōo
+難怪	莫怪	bo̍k-kuài
