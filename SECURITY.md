@@ -18,7 +18,8 @@
 - 建立元素的函式 `h()`（`js/ui.js`）拒絕事件屬性（`onclick=` 之類）、`style=`、`srcdoc`，也拒絕 `javascript:`、`data:`、`http:` 網址。
   開新分頁的連結一律帶 `rel="noopener noreferrer"`。
 - 內容安全政策（CSP）寫在 `index.html` 最前面：`default-src 'none'`；腳本只准自己網域的檔案，不准內嵌、不准 `eval`；
-  只准連回自己（`connect-src 'self'`）；不准 iframe、`<base>`、表單送出；樣式只准自己、兩段以雜湊值核可的內嵌樣式、和 Google Fonts。
+  只准連回自己（`connect-src 'self'`）；錄音只准同一個網域（`media-src 'self'`，即同一帳號的 taigi-audio 網站，網址只用驗證過的數字拼出來，
+  而且只認 `<帳號>.github.io` 這種單層網域）；不准 iframe、`<base>`、表單送出；樣式只准自己、兩段以雜湊值核可的內嵌樣式、和 Google Fonts。
   在瀏覽器裡試過：內嵌腳本、`onclick=`、`javascript:` 連結、`eval`、外部腳本、對外連線、對外圖片請求、iframe、行內樣式、`<base>` 全部被擋，
   而網頁自己正常使用時沒有任何一次違規。
 - 防點擊劫持：被嵌進別人網頁時整頁隱藏並試著跳出（`js/frameguard.js`）。GitHub Pages 不能設 `X-Frame-Options`，所以用這個方式。
@@ -56,7 +57,8 @@ sh tests/run.sh
 
 - GitHub Pages 不能自訂 HTTP 標頭，所以 `frame-ancestors`、`X-Content-Type-Options`、`Permissions-Policy` 這些只能靠標頭的保護在 GitHub Pages 上沒有。
   `_headers` 已經把完整的標頭備好，搬到 Cloudflare Pages 或 Netlify 就會生效。
-- 同一個 GitHub 帳號的 Pages 網站共用 `<帳號>.github.io` 這個網域，也共用 localStorage。
+- 同一個 GitHub 帳號的 Pages 網站共用 `<帳號>.github.io` 這個網域，也共用 localStorage。錄音網站（taigi-audio）只放 MP3 和說明文字，
+  沒有網頁和腳本，所以不會在這個網域裡多出可被利用的程式。千萬不要在那個倉庫放 .html 或 .js。
 - 字型來自 Google Fonts：Google 會看到訪客的 IP。要避免，得把字型存成自己的檔案，會讓倉庫多幾 MB。
 - 變調、華語對應是推算的，會錯。那是學習內容的正確性，不是安全問題，但請別當成權威。
 - 沒有找人做過人工的資安審查，上面的驗證是作者自己做的。GitHub 每次推送都會用 CodeQL 自動掃描 JavaScript 和 Python

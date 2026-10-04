@@ -69,7 +69,9 @@
     note: "M6 3h12v18H6zM9 8h6M9 12h6M9 16h3",
     cards: "M4 7h13v12H4zM7 7V4h13v12h-3",
     more: "M5 7h14M5 12h14M5 17h14",
-    undo: "M8 5L4 9l4 4M4 9h10a5 5 0 0 1 0 10h-3"
+    undo: "M8 5L4 9l4 4M4 9h10a5 5 0 0 1 0 10h-3",
+    speaker: "M4 9.5v5h3.5L12 18V6L7.5 9.5H4zM15.5 9a4 4 0 0 1 0 6M18 6.5a8 8 0 0 1 0 11",
+    quote: "M4 5h16v11H10l-4 4v-4H4z"
   };
 
   function icon(name) {
@@ -81,6 +83,21 @@
     p.setAttribute("d", ICONS[name] || "");
     svg.appendChild(p);
     return svg;
+  }
+
+  // ---- play button (the clip comes from TG.audio; no clip, no button) ----
+
+  /** playButton(url, label) is a round icon; playButton(url, label, "發音") is a normal button with that text. */
+  function playButton(url, label, text) {
+    if (!url) return null;
+    var b = h(text ? "button.btn.ghost.sm.play" : "button.icon-btn.play", {
+      type: "button", "aria-label": label || "播放發音", "aria-pressed": "false",
+      onclick: function (ev) {
+        ev.stopPropagation();
+        TG.audio.play(url, b, function () { toast("音檔載入失敗，請檢查網路"); });
+      }
+    }, icon("speaker"), text || null);
+    return b;
   }
 
   // ---- toast ----------------------------------------------------------------
@@ -310,7 +327,7 @@
 
   TG.ui = {
     h: h, add: add, clear: clear, $: $, icon: icon,
-    toast: toast, copy: copy, copyButton: copyButton,
+    toast: toast, copy: copy, copyButton: copyButton, playButton: playButton,
     openSheet: openSheet, closeSheet: closeSheet, closeAll: closeAll, refreshSheet: refreshSheet, initSheet: initSheet,
     contour: contour, toneLabel: toneLabel, TONE_NAME: TONE_NAME,
     renderLine: renderLine, analysePair: analysePair

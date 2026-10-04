@@ -9,6 +9,7 @@ files so the dictionary content itself is never altered.
     python3 tools/build_data.py            # writes data/
     python3 tools/build_data.py --report   # also prints the 華語 test list
 """
+import base64
 import collections
 import datetime
 import json
@@ -99,7 +100,7 @@ def build_entries():
         entries[eid] = {
             "id": eid, "type": typ, "hanji": hanji, "tailo": "/".join(readings),
             "readings": readings, "mark": rmark + mark, "cat": col(r, 4),
-            "senses": [], "x": {},
+            "senses": [], "x": {}, "audio": bool(re.match(r"^\d+\(1\)$", col(r, 5))),
         }
         order.append(eid)
 
@@ -122,7 +123,9 @@ def build_entries():
             continue
         eid, si = sense_of[gid]
         entries[eid]["senses"][si]["ex"].append(len(examples))
-        examples.append([nfc(r[3]), nfc(r[4]), nfc(r[5]), eid])
+        clip = col(r, 6)
+        prefix = str(eid) + "-"
+        examples.append([nfc(r[3]), nfc(r[4]), nfc(r[5]), eid, clip[len(prefix):] if clip.startswith(prefix) else ""])
 
     # alternative readings
     for sheet, kind in (("又唸作", "iu"), ("合音唸作", "ha"), ("俗唸作", "sio")):
@@ -465,11 +468,11 @@ def main():
                 for j in range(len(run) - n + 1):
                     grams.add(run[j:j + n])
         hua_ngrams[i] = grams
-        for g in grams:
+        for g in sorted(grams):
             cW[g] += 1
     tok_ex = collections.defaultdict(list)    # token -> example indices
     for i in uniq:
-        for k in set(ex_tokens[i]):
+        for k in dict.fromkeys(ex_tokens[i]):           # in order of appearance, not set order
             tok_ex[k].append(i)
 
     assoc = {}         # (W, token) -> (c, dice, pTW, pWT)
@@ -504,7 +507,8 @@ def main():
 
     discovered = []
     new_keys = set()
-    for k, rows in per_tok.items():
+    known0 = set(cand)          # which 華語 words were known BEFORE learning from the examples (cand grows inside the loop)
+    for k, rows in sorted(per_tok.items(), key=lambda kv: kv[0]):
         h = k[0]
         cT = len(tok_ex[k])
 
@@ -512,12 +516,12 @@ def main():
             """Dice, pulled down for small counts, nudged up for words we already know."""
             c = rows[w][0]
             d = 2.0 * c / (cW[w] + cT + 2)
-            return d * (1.25 if w in cand else 1.0) * (1.1 if w == h else 1.0)
+            return d * (1.25 if w in known0 else 1.0) * (1.1 if w == h else 1.0)
 
         best_t = max((strength(w) for w, r in rows.items() if r[0] >= 3), default=0.0)
         same_seen = h in rows and rows[h][0] >= 2
         for w, (c, dice, p_tw, p_wt) in rows.items():
-            known = w in cand
+            known = w in known0
             st = strength(w)
             if w == h:
                 ok = c >= 2 and (known or w[-1] not in EDGE_R)
@@ -612,7 +616,7 @@ def main():
             if c.get("note"):
                 row.append(c["note"])
             rows.append(row)
-        rows.sort(key=lambda r: -r[3])
+        rows.sort(key=lambda r: (-r[3], str(r[0])))      # same score: a fixed order, so a rebuild gives the same file
         index[w] = rows[:8]
 
     # ---- sandhi class hint for entries without senses (臺華共同詞) --------
@@ -675,6 +679,63 @@ def main():
     daily.sort(key=lambda i: -min(freq.get(i, 0), 30) + rnd.random() * 30)
     print(f"daily candidates {len(daily)}")
 
+    # ---- 華語 synonym graph (for searching proverbs by meaning) ----------------------
+    # Words listed together in one gloss ("喝、飲", "漂亮的、美麗的") are near-synonyms; the hand groups add more.
+    groups = collections.defaultdict(list)
+    for w, eid, gi_, si, pi in gl:
+        if gloss_fanout[w] <= 60 and len(w) <= 4:
+            groups[(eid, gi_, si)].append(w)
+    score = collections.defaultdict(collections.Counter)
+
+    def connect(words, weight):
+        words = list(dict.fromkeys(words))
+        for a in words:
+            for b in words:
+                if a != b and a not in b and b not in a:       # 夫妻 / 夫妻恩愛 are not two ideas
+                    score[a][b] += weight
+
+    for ws in groups.values():
+        if 2 <= len(ws) <= 8:
+            connect(ws, 1)
+    hand_syn = os.path.join(TOOLS, "synonyms_hand.tsv")
+    n_hand = 0
+    for line in open(hand_syn, encoding="utf-8"):
+        if line.strip() and not line.startswith("#"):
+            connect(line.split(), 6)
+            n_hand += 1
+    synonyms = {w: [b for b, _ in c.most_common(10)] for w, c in score.items() if c}
+    print(f"synonym graph: {len(synonyms)} words ({n_hand} hand groups)")
+
+    # ---- proverb keywords (hand-written search words, see tools/proverb_keywords.tsv) -------------
+    by_text = {nfc(e["hanji"]): eid for eid, e in entries.items() if e["type"] == T_APPX and re.search("[。！？]$", e["hanji"])}
+    proverb_kw, unmatched = {}, []
+    for line in open(os.path.join(TOOLS, "proverb_keywords.tsv"), encoding="utf-8"):
+        if not line.strip() or line.startswith("#"):
+            continue
+        text, _, words = line.rstrip("\n").partition("\t")
+        text = nfc(text.strip())
+        words = " ".join(dict.fromkeys(nfc(words).split()))
+        if text in by_text and words:
+            proverb_kw[by_text[text]] = words
+        else:
+            unmatched.append(text)
+    missing = [t for t, eid in by_text.items() if eid not in proverb_kw]
+    print(f"proverbs {len(by_text)}, with keywords {len(proverb_kw)}, keyword lines that match no proverb {len(unmatched)}, proverbs without keywords {len(missing)}")
+    for t in unmatched:
+        print("   no such proverb (typo, or the dictionary changed):", t)
+    for t in missing[:10]:
+        print("   no keywords yet:", t)
+    if unmatched:
+        sys.exit("fix tools/proverb_keywords.tsv")
+
+    # which headwords have a recorded clip: a bitset over entry ids
+    top = max(entries)
+    bits = bytearray((top >> 3) + 1)
+    for eid, e in entries.items():
+        if e["audio"]:
+            bits[eid >> 3] |= 1 << (eid & 7)
+    print(f"headword clips: {sum(1 for e in entries.values() if e['audio'])}")
+
     # ---- write ------------------------------------------------------------
     os.makedirs(OUT, exist_ok=True)
 
@@ -713,8 +774,11 @@ def main():
         },
         "types": TYPES, "pos": pos_list, "e": out_entries,
     })
-    dump("examples.json", [ex[:3] for ex in examples])
-    dump("huayu.json", index)
+    dump("examples.json", [ex[:3] + [ex[3], ex[4]] for ex in examples])
+    dump("synonyms.json", synonyms)
+    dump("proverb_kw.json", {str(k): v for k, v in sorted(proverb_kw.items())})
+    dump("audio.json", {"w": base64.b64encode(bytes(bits)).decode("ascii")})
+    dump("huayu.json", dict(sorted(index.items())))      # sorted keys: the same input always gives the same file
     chars = {}
     for ch, cnt in char_read.items():
         chars[ch] = " ".join(s for s, _ in cnt.most_common(4))
