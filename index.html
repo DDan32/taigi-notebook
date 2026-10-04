@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'sha256-6p4fUbGSSz0aV4YtUPCa2Ty5nTY0Ciqx7CTWm+FtgOo=' 'sha256-u+tqFl8vz1gRWk6mHE2fd+CBvfHfVBXJrnaPEBIytOo=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; media-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'sha256-6p4fUbGSSz0aV4YtUPCa2Ty5nTY0Ciqx7CTWm+FtgOo=' 'sha256-Flsq8Mui3pgJgFWEiiGn6MkZVJN1SGPNlhj3rBeQAr4=' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; media-src 'self'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
@@ -158,6 +158,10 @@ label { font-size: 14px; color: var(--ink-soft); }
 /* ---- 音節格：漢字、台羅、本調›變調、音高線 ---- */
 .line { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px 8px; }
 .seg { display: inline-flex; flex-direction: column; align-items: stretch; padding: 0; margin: 0; border: 0; background: none; color: inherit; text-align: center; border-radius: 2px; }
+.seg.now .syls { background: var(--marker); box-shadow: 0 0 0 2px var(--pen-red); }
+.playbar { display: flex; flex-direction: column; gap: 6px; }
+.playbar .now { min-height: 28px; font-size: 18px; }
+.small { font-size: 13px; }
 button.seg:active .syls { background: var(--tint); }
 .seg-src { font-size: 12px; line-height: 18px; color: var(--ink-soft); white-space: nowrap; }
 .syls { display: inline-flex; background: var(--sheet); border: 1px solid var(--rule-strong); }

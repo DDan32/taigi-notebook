@@ -286,6 +286,7 @@
         });
       });
       add(box, row);
+      box.dataset.seg = String(g.seg);
       add(line, box);
     });
     return line;
