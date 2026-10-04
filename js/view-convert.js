@@ -120,8 +120,68 @@
     return cur.segs.some(function (x) { return x.kind === "seg" && C.current(x) && C.current(x)[flag]; });
   }
 
+  // ---- 逐詞聽：錄音是各詞單獨唸的本調唸法；畫面同步標出「這裡實際要唸成」的變調後讀音 ----
+
+  var stopPlay = null;
+
+  /** 一個詞的台羅（調符），actual 為真就用變調後的聲調；不大寫，輕聲照辭典寫法加 -- */
+  function spell(toks, actual) {
+    return toks.map(function (w) {
+      return (w.syls || []).map(function (s, j) {
+        var body = T.compose(s.base, actual && !s.neutral ? s.actual : s.tone);
+        return (j ? "-" : s.neutral ? "--" : "") + body;
+      }).join("");
+    }).join(" ");
+  }
+
+  function playPlan() {
+    var items = [], skipped = [];
+    cur.segs.forEach(function (seg, si) {
+      if (seg.kind !== "seg") return;
+      var c = C.current(seg), e = c && c.entry;
+      var url = e && !(seg.ov && Object.keys(seg.ov).length) && D.sameReading(c.tailo, e.tailo) ? TG.audio.word(e.id) : null;
+      var toks = cur.tokens.filter(function (t) { return t.kind === "word" && t.seg === si; });
+      var label = c && c.hanji || seg.src;
+      if (url) items.push({ url: url, seg: si, label: label, base: spell(toks, false), actual: spell(toks, true) });
+      else skipped.push(label);
+    });
+    return { items: items, skipped: skipped };
+  }
+
+  function playBar() {
+    if (cur.sample || !TG.audio.available()) return null;
+    var plan = playPlan();
+    if (!plan.items.length) return null;
+    var now = h("p.now", { "aria-live": "polite", text: " " });
+    var btn = h("button.btn.primary", { type: "button", "aria-pressed": "false" }, U.icon("speaker"), "逐詞聽");
+    function mark(i) {
+      els.result.querySelectorAll(".seg.now").forEach(function (n) { n.classList.remove("now"); });
+      if (i < 0) { U.clear(now); now.textContent = " "; return; }
+      var it = plan.items[i];
+      var n = els.result.querySelector('.seg[data-seg="' + it.seg + '"]');
+      if (n) { n.classList.add("now"); if (n.scrollIntoView) n.scrollIntoView({ block: "nearest", inline: "nearest" }); }
+      U.clear(now);
+      U.add(now, [h("b.hj", { lang: "nan-Hant", text: it.label + " " }),
+        it.actual === it.base ? h("span.tl", { text: it.actual + "（照本調唸）" })
+          : [h("span.tl", { text: it.actual }), h("span.muted", { text: "　要變調；錄音是本調 " + it.base })]]);
+    }
+    function done() { btn.classList.remove("playing", "busy"); btn.setAttribute("aria-pressed", "false"); mark(-1); stopPlay = null; }
+    btn.addEventListener("click", function () {
+      if (stopPlay) { stopPlay(); return; }
+      btn.classList.add("busy"); btn.setAttribute("aria-pressed", "true");
+      stopPlay = TG.audio.sequence(plan.items, {
+        onStep: function (i) { btn.classList.remove("busy"); btn.classList.add("playing"); mark(i); },
+        onEnd: done,
+        onFail: function () { done(); U.toast("音檔載入失敗，請檢查網路"); }
+      });
+    });
+    return h("div.playbar", null, h("div.row.wrap", null, btn, h("span.muted.small", { text: "依序唸每個詞，錄音是各詞單獨唸的本調" })), now,
+      plan.skipped.length ? h("p.hint", { text: "沒有錄音，跳過：" + plan.skipped.join("、") }) : null);
+  }
+
   function renderResult() {
     var box = els.result;
+    if (stopPlay) stopPlay();
     U.clear(box);
     if (!cur.tokens.length) return;
     var head = h("div.card-head", null,
@@ -149,7 +209,7 @@
     var note = cur.used === "huayu"
       ? h("p.note", { text: "這是逐詞對應，不是翻譯：語序和句型要自己調整。每個詞都可以換說法、改發音、改聲調、前後移動。" })
       : null;
-    U.add(box, [head, cur.restored ? h("p.note.ok", { text: "已套用你上次對這句話的更正。" }) : null, line, legend, outs, actions, note]);
+    U.add(box, [head, cur.restored ? h("p.note.ok", { text: "已套用你上次對這句話的更正。" }) : null, line, playBar(), legend, outs, actions, note]);
     renderRelated();
   }
 

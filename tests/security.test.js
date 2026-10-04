@@ -33,9 +33,11 @@ for (const f of jsFiles) {
 // the only fetch() calls are for our own relative files
 for (const f of jsFiles) {
   for (const m of read("js/" + f).matchAll(/fetch\(\s*([^)]*)\)/g)) {
-    check(/^["'](?:data|widget)\//.test(m[1].trim()) || /^path$/.test(m[1].trim()), `js/${f}: fetch(${m[1]}) is not a relative file of ours`);
+    check(/^["'](?:data|widget)\//.test(m[1].trim()) || /^path$/.test(m[1].trim()) || (f === "audio.js" && m[1].trim() === "url"), `js/${f}: fetch(${m[1]}) is not a relative file of ours`);
   }
 }
+// audio.js may fetch only a url that starts with its own validated base (guard sits right in front of the fetch)
+check(/url\.indexOf\(A\.base\) !== 0/.test(read("js/audio.js")), "audio.js fetchBuf must refuse URLs outside A.base");
 console.log(`sink scan: ${jsFiles.length} files`);
 
 // no hidden or bidirectional characters in anything we write (they make code show differently from how it runs)
