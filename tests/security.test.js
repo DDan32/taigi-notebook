@@ -93,6 +93,29 @@ const h = TG.ui.h;
   check(kid.children[0].nodeType === 3 && kid.children[0].text === "<b>x</b>", "string children must become text nodes");
 }
 
+// ---- 2b. recordings: where they come from and what a clip URL can contain -------------------------
+{
+  const A = TG.audio;
+  const at = (hostname) => A.baseUrl({ hostname, origin: "https://" + hostname });
+  check(at("ddan32.github.io") === "https://ddan32.github.io/taigi-audio/", "GitHub Pages base: " + at("ddan32.github.io"));
+  check(at("localhost") === "audio/" && at("127.0.0.1") === "audio/", "local base");
+  for (const evil of ["claude.ai", "evil.example", "ddan32.github.io.evil.example", "github.io.evil.example", "xgithub.io", "evil.com#.github.io", "a.b.github.io", ".github.io", "-x.github.io", "evil.example/.github.io"]) {
+    check(at(evil) === null, `no audio base may be offered on ${evil}, got ${at(evil)}`);
+  }
+  A.base = "https://ddan32.github.io/taigi-audio/";
+  check(A.example(26848, "1-1") === "https://ddan32.github.io/taigi-audio/s/26/26848-1-1.mp3", "example url: " + A.example(26848, "1-1"));
+  for (const bad of ["../1-1", "1-1/../../x", "1-1.mp3", "1-1\n", "a-1", "1-", "", "1-1-1", "1000-1", " 1-1", "1-1 ", "%2e%2e-1"]) {
+    check(A.example(5, bad) === null, `example suffix ${JSON.stringify(bad)} must be refused`);
+  }
+  for (const bad of ["5", 5.5, NaN, -1, null, undefined, "../5", Infinity]) check(A.example(bad, "1-1") === null, `example id ${JSON.stringify(bad)} must be refused`);
+  check(A.word("5") === null && A.word(5.5) === null && A.word(-1) === null && A.word(1e9) === null && A.word(NaN) === null, "word ids that are not clean integers must be refused");
+  const withClip = TG.dict.entries.find((e) => A.word(e.id));
+  check(withClip && A.word(withClip.id) === `https://ddan32.github.io/taigi-audio/w/${Math.floor(withClip.id / 1000)}/${withClip.id}.mp3`, "word url");
+  check(!TG.dict.entries.some((e) => e.type !== 4 && e.type !== 0 && e.type !== 1 && e.type !== 2 && A.word(e.id) && false), "clip list sanity");
+  A.base = null;
+  check(A.word(withClip.id) === null && A.example(5, "1-1") === null, "without a base nothing is offered");
+}
+
 // ---- 3. hostile data ---------------------------------------------------------------------------------
 function freshStore(initial) {
   const m = new Map(Object.entries(initial || {}));
@@ -202,7 +225,8 @@ function finish() {
   const script = dir("script-src") || [];
   check(script.join() === "'self'", "script-src must be exactly 'self', got " + script.join(" "));
   check(!/unsafe-inline|unsafe-eval|\*|http:/.test(csp.replace(/https:\/\/fonts\.g[a-z]+\.com/g, "")), "the policy allows something it must not: " + csp);
-  for (const d of ["base-uri", "form-action", "object-src", "frame-src", "worker-src", "media-src"]) check((dir(d) || []).join() === "'none'", `${d} must be 'none'`);
+  for (const d of ["base-uri", "form-action", "object-src", "frame-src", "worker-src"]) check((dir(d) || []).join() === "'none'", `${d} must be 'none'`);
+  check((dir("media-src") || []).join() === "'self'", "media-src must be exactly 'self' (the recordings)");
   check((dir("connect-src") || []).join() === "'self'", "connect-src must be 'self'");
   check((dir("style-src") || []).filter((x) => /^https:/.test(x)).join() === "https://fonts.googleapis.com", "style-src may only add the font stylesheet host");
   check((dir("font-src") || []).join() === "https://fonts.gstatic.com", "font-src may only be the font file host");

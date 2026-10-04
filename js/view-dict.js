@@ -77,7 +77,7 @@
     return h("span.row.wrap", null, ids.map(function (id) {
       var e = D.get(id);
       if (!e) return null;
-      return h("button.chip", { type: "button", onclick: function () { openEntry(e); } },
+      return h("button.chip" + (e.hanji.length > 8 ? ".cite" : ""), { type: "button", onclick: function () { openEntry(e); } },
         h("span.hj", { lang: "nan-Hant", text: e.hanji }), e.tailo ? h("span.tl", { lang: "nan-Latn", text: " " + e.tailo }) : null);
     }));
   }
@@ -88,13 +88,16 @@
     var inBook = store.findWord(e.hanji, e.tailo);
     var num = e.tailo ? T.toNumeric(e.tailo) : "";
     var alts = e.x.a || [];
+    var P = TG.proverb;
+    var similar = P && P.ready && P.byId[e.id] ? P.similar(e.id, 4) : [];
+    var parents = P && P.ready && P.related[e.id] ? P.related[e.id].filter(function (id) { return P.byId[id]; }) : [];
     return h("div.stack.entry", null,
       h("div.entry-top", null,
         h("div", null,
           h("div.entry-hanji", { lang: "nan-Hant" }, e.hanji, marks(e)),
           e.tailo ? h("div.entry-tailo", { lang: "nan-Latn" }, e.tailo, h("span.num", { text: num })) : null,
           e.readings.length > 1 ? h("div.muted", null, "第二優勢腔：", h("span.tl", { lang: "nan-Latn", text: e.readings.slice(1).join("、") })) : null),
-        e.tailo ? h("div.col", null, U.copyButton(e.tailo, "台羅", "台羅"), U.copyButton(num, "數字調", "數字調")) : null),
+        e.tailo ? h("div.col", null, U.playButton(TG.audio.word(e.id), "播放「" + e.hanji + "」的發音", "發音"), U.copyButton(e.tailo, "台羅", "台羅"), U.copyButton(num, "數字調", "數字調")) : null),
       a && a.tokens.length ? h("div", null, U.renderLine(a.tokens, { segs: a.segs, contour: store.state.settings.contour }),
         h("p.hint", { text: "單獨唸這個詞時的本調與變調。" })) : null,
       TYPE_NOTE[e.type] ? h("p.note", { text: TYPE_NOTE[e.type] }) : null,
@@ -110,6 +113,8 @@
       alts.length ? h("p.rel", null, alts.map(function (x) {
         return h("span.alt", null, h("span.rel-label", { text: ALT[x[0]] || "又音" }), h("span.tl", { lang: "nan-Latn", text: x[1] }));
       })) : null,
+      parents.length ? h("p.rel", null, h("span.rel-label", { text: "同一句的另一種說法" }), relatedChips(parents)) : null,
+      similar.length ? h("p.rel", null, h("span.rel-label", { text: "意思相近的諺語" }), relatedChips(similar.map(function (d) { return d.id; }))) : null,
       e.x.s ? h("p.rel", null, h("span.rel-label", { text: "近義詞" }), relatedChips(e.x.s)) : null,
       e.x.n ? h("p.rel", null, h("span.rel-label", { text: "反義詞" }), relatedChips(e.x.n)) : null,
       e.x.v ? h("p.rel", null, h("span.rel-label", { text: "異用字" }), h("span.hj", { lang: "nan-Hant", text: e.x.v.join("、") })) : null,

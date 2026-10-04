@@ -163,10 +163,27 @@
 
   // ---- related examples from the dictionary -------------------------------------------
 
+  var PROVERB_MIN = 28;       // scores of a real match are 40 and up; unrelated sentences stay under about 21
+
+  /** Proverbs whose meaning is close to what was typed (华語 or 台語漢字 input; not for romanization). */
+  function relatedProverbs() {
+    var P = TG.proverb;
+    if (!P || !P.ready || cur.sample || cur.used === "tailo" || !cur.src) return [];
+    return P.search(cur.src, 6).filter(function (r) { return r.score >= PROVERB_MIN; }).slice(0, 3);
+  }
+
   function renderRelated() {
     var box = els.related;
     U.clear(box);
-    if (!D.examples || cur.sample || !cur.segs.length) return;
+    if (cur.sample || !cur.segs.length) return;
+    var prov = relatedProverbs();
+    if (prov.length) {
+      U.add(box, h("div.card", null,
+        h("div.card-head", null, h("h2", { text: "意思相近的諺語" }), h("span.tag", { text: "教育部辭典" })),
+        h("ul.proverb-list", null, prov.map(function (r) { return TG.views.proverb.row(r); })),
+        h("p.hint", { text: "依你輸入的意思找的，請看釋義確認是不是想表達的。" })));
+    }
+    if (!D.examples) return;
     var keys = [];
     cur.segs.forEach(function (s) {
       if (s.kind !== "seg") return;
@@ -189,10 +206,11 @@
   }
 
   function exampleItem(ex) {
-    return h("li", null, h("button.ex", { type: "button", onclick: function () { openExample(ex); } },
+    return h("li.ex-li", null, h("button.ex", { type: "button", onclick: function () { openExample(ex); } },
       h("span.hj", { lang: "nan-Hant", text: ex[0] }),
       h("span.tl", { lang: "nan-Latn", text: ex[1] }),
-      h("span.zh", { text: ex[2] })));
+      h("span.zh", { text: ex[2] })),
+      U.playButton(TG.audio.example(ex[3], ex[4]), "播放這個例句"));
   }
 
   /** 例句面板：用辭典給的台羅標出變調。 */
@@ -203,7 +221,7 @@
       render: function () {
         return h("div.stack", null,
           U.renderLine(a.tokens, { segs: a.segs, contour: store.state.settings.contour }),
-          h("p.zh", { text: ex[2] }),
+          h("div.row", null, U.playButton(TG.audio.example(ex[3], ex[4]), "播放這個例句"), h("p.zh", { text: ex[2] })),
           h("div.outs", null,
             h("div.out-row", null, h("div.out-main", null, h("span.out-label", { text: "台羅" }), h("span.out-text.tl", { lang: "nan-Latn", text: ex[1] })), U.copyButton(ex[1], "台羅")),
             h("div.out-row", null, h("div.out-main", null, h("span.out-label", { text: "實際讀音" }), h("span.out-text.tl", { text: S.format(a.tokens, "actual") })), U.copyButton(S.format(a.tokens, "actual"), "變調後讀音"))),
@@ -465,7 +483,7 @@
       els.loading.hidden = true;
       if (cur.sample) showSample();
     }
-    if (what === "examples") renderRelated();
+    if (what === "examples" || what === "proverb") renderRelated();
   }
 
   store.on(function (what) {

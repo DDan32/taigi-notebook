@@ -81,7 +81,7 @@ def policy(hashes, header=False):
         "object-src 'none'",
         "frame-src 'none'",
         "worker-src 'none'",
-        "media-src 'none'",
+        "media-src 'self'",                                               # the recordings: same origin (the taigi-audio site of the same account)
     ]
     if header:
         parts.append("frame-ancestors 'none'")                            # not allowed in <meta>, fine as a header

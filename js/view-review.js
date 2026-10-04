@@ -36,6 +36,7 @@
           store.addWord({ h: e.hanji, t: e.tailo, m: D.shortDef(e, 0), ref: e.id });
           U.toast("已加入生字簿：" + e.hanji);
         } }, U.icon(inBook ? "check" : "note"), inBook ? "已在生字簿" : "加入生字簿"),
+        U.playButton(TG.audio.word(e.id), "播放「" + e.hanji + "」的發音", "發音"),
         U.copyButton(e.tailo, "台羅", "複製台羅"))
     ]);
   }
@@ -101,7 +102,7 @@
           h("small", { text: srs.INTERVALS[Math.min((w.lv || 0) + 1, 7)] + " 天後" }))),
       h("div.row.between", null,
         h("button.link", { type: "button", onclick: function () { TG.views.notebook.editWord(w.id); } }, "修改這個生詞"),
-        w.t ? U.copyButton(w.t, "台羅") : null));
+        h("span.row", null, U.playButton(e ? TG.audio.word(e.id) : null, "播放發音"), w.t ? U.copyButton(w.t, "台羅") : null)));
   }
 
   function renderSession() {

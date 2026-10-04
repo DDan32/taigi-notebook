@@ -183,7 +183,7 @@
         fn.value = w.n || "";
         return h("div.stack", null,
           a && a.tokens.length ? U.renderLine(a.tokens, { segs: a.segs, contour: store.state.settings.contour }) : null,
-          w.t ? h("div.row.wrap", null, U.copyButton(w.t, "台羅", "複製台羅"), U.copyButton(T.toNumeric(w.t), "數字調", "複製數字調")) : null,
+          w.t ? h("div.row.wrap", null, U.playButton(e ? TG.audio.word(e.id) : null, "播放發音", "發音"), U.copyButton(w.t, "台羅", "複製台羅"), U.copyButton(T.toNumeric(w.t), "數字調", "複製數字調")) : null,
           h("div.form-grid", null,
             h("label", { for: "ed-h", text: "漢字" }), fh,
             h("label", { for: "ed-t", text: "台羅" }), ft,

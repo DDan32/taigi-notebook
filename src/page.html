@@ -181,6 +181,22 @@ button.seg:active .syls { background: var(--tint); }
 .level i { width: 7px; height: 7px; border-radius: 50%; border: 1px solid var(--rule-strong); }
 .level i.on { background: var(--green); border-color: var(--green); }
 .ex-list { gap: 6px; }
+.ex-li { display: flex; align-items: center; gap: 2px; }
+.ex-li .ex { flex: 1; min-width: 0; }
+.icon-btn.play { color: var(--pen-blue); flex: none; }
+.icon-btn.play.busy { opacity: .45; }
+.icon-btn.play.playing, .btn.play.playing { color: var(--green); background: var(--tint); }
+.btn.play.busy { opacity: .6; }
+mark { background: var(--marker); color: inherit; border-radius: 2px; padding: 0 1px; }
+.proverb-list { display: flex; flex-direction: column; }
+.proverb { display: flex; align-items: flex-start; gap: 2px; border-bottom: 1px solid var(--rule); }
+.proverb-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 10px 2px; background: none; border: 0; text-align: left; }
+.proverb .icon-btn { margin-top: 6px; }
+.proverb-hj { font-size: 20px; line-height: 1.4; overflow-wrap: anywhere; }
+.proverb-tl { font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.proverb-meaning { font-size: 14px; line-height: 1.5; color: var(--ink-soft); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.proverb-why { font-size: 12.5px; color: var(--green); }
+.intro { display: flex; flex-direction: column; gap: 12px; }
 .ex { width: 100%; display: flex; flex-direction: column; gap: 1px; padding: 8px 10px; text-align: left; background: var(--paper); border: 0; border-left: 3px solid var(--rule-strong); border-radius: 0 4px 4px 0; }
 .ex .hj { font-size: 18px; line-height: 1.4; }
 .ex .tl { font-size: 15px; line-height: 1.4; }
@@ -296,6 +312,7 @@ button.seg:active .syls { background: var(--tint); }
   <main id="main">
     <section class="view" id="view-convert" aria-label="轉換"></section>
     <section class="view" id="view-dict" aria-label="辭典" hidden></section>
+    <section class="view" id="view-proverb" aria-label="諺語" hidden></section>
     <section class="view" id="view-notebook" aria-label="生字簿" hidden></section>
     <section class="view" id="view-review" aria-label="複習" hidden></section>
     <section class="view" id="view-more" aria-label="更多" hidden></section>
@@ -309,11 +326,14 @@ button.seg:active .syls { background: var(--tint); }
 <script src="js/sandhi.js"></script>
 <script src="js/dict.js"></script>
 <script src="js/convert.js"></script>
+<script src="js/proverb.js"></script>
+<script src="js/audio.js"></script>
 <script src="js/store.js"></script>
 <script src="js/srs.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/view-convert.js"></script>
 <script src="js/view-dict.js"></script>
+<script src="js/view-proverb.js"></script>
 <script src="js/view-notebook.js"></script>
 <script src="js/view-review.js"></script>
 <script src="js/view-more.js"></script>

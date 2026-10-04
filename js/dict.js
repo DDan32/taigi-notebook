@@ -57,7 +57,7 @@
   }
 
   // 這兩張表用「使用者輸入的字」當鍵查詢；沒有原型，constructor、__proto__ 之類的字串就只是查不到。
-  var NO_PROTO = { huayu: 1, chars: 1 };
+  var NO_PROTO = { huayu: 1, chars: 1, synonyms: 1, proverbKw: 1 };
   function set(name, value) {
     if (NO_PROTO[name] === 1 && value && typeof value === "object") Object.setPrototypeOf(value, null);
     D[name] = value;

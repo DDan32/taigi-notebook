@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 node tests/tailo.test.js
 node tests/sandhi.test.js
 node tests/convert.test.js
+node tests/proverb.test.js
 node tests/store.test.js
 node tests/widget.test.js
 node tests/security.test.js

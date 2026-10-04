@@ -8,3 +8,5 @@ node_modules/
 # the official dictionary download is not redistributed here; see README
 *.ods
 *.zip
+# a local copy of the recordings for testing (they live in the taigi-audio repository)
+audio

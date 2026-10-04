@@ -6,7 +6,7 @@
   var doc = root.document;
 
   var TABS = [
-    ["convert", "轉換", "pen"], ["dict", "辭典", "book"], ["notebook", "生字簿", "note"],
+    ["convert", "轉換", "pen"], ["dict", "辭典", "book"], ["proverb", "諺語", "quote"], ["notebook", "生字簿", "note"],
     ["review", "複習", "cards"], ["more", "更多", "more"]
   ];
   var current = "convert";
@@ -30,10 +30,14 @@
     });
   }
 
-  function getJSON(path) {
+  /** One retry after a short pause: a phone on a weak connection often fails the first request. */
+  function getJSON(path, retried) {
     return root.fetch(path).then(function (r) {
       if (!r.ok) throw new Error(path + " " + r.status);
       return r.json();
+    }).catch(function (e) {
+      if (retried) throw e;
+      return new Promise(function (done) { root.setTimeout(done, 800); }).then(function () { return getJSON(path, true); });
     });
   }
 
@@ -44,13 +48,22 @@
   }
 
   function loadData() {
-    return Promise.all([getJSON("data/dict.json"), getJSON("data/huayu.json"), getJSON("data/chars.json"), getJSON("data/daily.json")])
+    // the proverb words and the clip list are extras: the site still works without them
+    TG.app.missing = [];
+    var optional = function (p) { return getJSON(p).catch(function () { TG.app.missing.push(p); return null; }); };
+    return Promise.all([getJSON("data/dict.json"), getJSON("data/huayu.json"), getJSON("data/chars.json"), getJSON("data/daily.json"),
+      optional("data/synonyms.json"), optional("data/audio.json"), optional("data/proverb_kw.json")])
       .then(function (r) {
         D.init(r[0]);
         D.set("huayu", r[1]);
         D.set("chars", r[2]);
         D.set("daily", r[3]);
+        if (r[4]) D.set("synonyms", r[4]);
+        if (r[5]) D.set("audio", r[5]);
+        if (r[6]) D.set("proverbKw", r[6]);
         notify("dict");
+        TG.proverb.init();
+        notify("proverb");
         return getJSON("data/examples.json");
       })
       .then(function (ex) {
