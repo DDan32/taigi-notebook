@@ -139,7 +139,8 @@
     cur.segs.forEach(function (seg, si) {
       if (seg.kind !== "seg") return;
       var c = C.current(seg), e = c && c.entry;
-      var url = e && !(seg.ov && Object.keys(seg.ov).length) && D.sameReading(c.tailo, e.tailo) ? TG.audio.word(e.id) : null;
+      // 改聲調只改畫面上的標示，錄音還是同一段；讀音和詞條不同（又音、自己填的）才沒有錄音
+      var url = e && D.sameReading(c.tailo, e.tailo) ? TG.audio.word(e.id) : null;
       var toks = cur.tokens.filter(function (t) { return t.kind === "word" && t.seg === si; });
       var label = c && c.hanji || seg.src;
       if (url) items.push({ url: url, seg: si, label: label, base: spell(toks, false), actual: spell(toks, true) });

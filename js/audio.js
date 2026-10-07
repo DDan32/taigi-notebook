@@ -117,7 +117,7 @@
     A.stop();
     if (!AC || typeof fetch !== "function" || !items.length) { if (cb.onFail) cb.onFail(); return function () {}; }
     ctx = ctx || new AC();
-    if (ctx.state === "suspended") ctx.resume();
+    if (ctx.state !== "running" && ctx.resume) ctx.resume();     // iPhone: "suspended" or "interrupted" (after a call, a lock, another app)
     var alive = true, srcs = [], timers = [];
     var state = { el: { pause: function () {} }, url: null, done: function () {} };
     function stop(early) {
@@ -130,11 +130,14 @@
     }
     state.done = function () { stop(true); };
     A.current = state;
-    Promise.all(items.map(function (it) { return fetchBuf(it.url); })).then(function (bufs) {
+    // one clip that fails to load must not silence the whole sentence: it is skipped
+    Promise.all(items.map(function (it) { return fetchBuf(it.url).catch(function () { return null; }); })).then(function (bufs) {
       if (!alive) return;
+      if (!bufs.some(Boolean)) { stop(true); if (cb.onFail) cb.onFail(); return; }
       var t = ctx.currentTime + 0.05;
       var t0 = t;
       bufs.forEach(function (buf, i) {
+        if (!buf) return;
         var r = trimRange(buf), len = Math.max(0.05, r[1] - r[0]);
         var src = ctx.createBufferSource();
         src.buffer = buf;
