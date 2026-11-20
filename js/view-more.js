@@ -1,11 +1,10 @@
-/* 「更多」分頁：聲調設定與聲調表、我的更正、備份、iPhone／iPad 小工具、資料來源。 */
+/* 「更多」分頁：聲調設定與聲調表、備份、資料來源。 */
 (function (root) {
   "use strict";
   var TG = root.TG;
   var U = TG.ui, h = U.h, T = TG.tailo, S = TG.sandhi, D = TG.dict, store = TG.store, srs = TG.srs;
 
   var el = null;
-  var widgetCode = "";
   var backupDraft = "";
   // 傳統的八音口訣：君滾棍骨裙滾郡滑
   var TONES = [
@@ -44,25 +43,6 @@
         "在每個音節下面畫出實際讀出來的音高"),
       toneTable(),
       h("p.hint", { text: "台語寫的時候一律寫本調。說話時，一個詞組裡只有最後一個音節讀本調，前面的都照上表變調；「仔」前面和三疊字另有規則。本站用詞性推算哪裡讀本調，推錯的地方請在「轉換」頁點那個詞更正。" }));
-  }
-
-  function fixesCard() {
-    var fw = store.state.fix.word, fr = store.state.fix.read;
-    var rows = [];
-    Object.keys(fw).forEach(function (k) {
-      rows.push(h("li", null,
-        h("span", null, "華語「" + k + "」→ ", h("span.hj", { lang: "nan-Hant", text: fw[k].h }), " ", h("span.tl", { lang: "nan-Latn", text: fw[k].t })),
-        h("button.btn.ghost.sm", { type: "button", onclick: function () { store.removeFix("word", k); } }, U.icon("trash"), "移除")));
-    });
-    Object.keys(fr).forEach(function (k) {
-      rows.push(h("li", null,
-        h("span", null, h("span.hj", { lang: "nan-Hant", text: k }), " 讀作 ", h("span.tl", { lang: "nan-Latn", text: fr[k] })),
-        h("button.btn.ghost.sm", { type: "button", onclick: function () { store.removeFix("read", k); } }, U.icon("trash"), "移除")));
-    });
-    return h("div.card", null,
-      h("div.card-head", null, h("h2", { text: "我的更正" }), h("span.tag", { text: rows.length + " 筆" })),
-      rows.length ? h("ul.fix-list", null, rows)
-        : h("p.muted", { text: "在「轉換」頁換過說法或改過發音之後，會記在這裡，以後自動套用。聲調的更正跟著那一句話，收藏句子就會留下來。" }));
   }
 
   // ---- backup -----------------------------------------------------------------------
@@ -117,28 +97,6 @@
       } }, "匯入備份"));
   }
 
-  // ---- widget -------------------------------------------------------------------------
-
-  function widgetCard() {
-    var words = store.listWords().filter(function (w) { return w.h && w.t; }).slice(0, 400)
-      .map(function (w) { return { h: w.h, t: w.t, m: w.m || "" }; });
-    return h("div.card", null,
-      h("div.card-head", null, h("h2", { text: "iPhone／iPad 主畫面小工具" })),
-      h("p", { text: "網頁本身沒辦法變成主畫面小工具，那是 App 才有的功能。免費的 Scriptable App 可以用一段程式做出小工具：每天換一個詞，顯示漢字、台羅、意思和例句，和這裡的「今日一詞」是同一個詞。" }),
-      h("ol.steps", null,
-        h("li", { text: "在 App Store 安裝 Scriptable。" }),
-        h("li", { text: "按下面的「複製小工具程式」。" }),
-        h("li", { text: "打開 Scriptable，按右上角的 ＋，把程式貼上；點最上面的名稱，改成「台語每日一詞」。" }),
-        h("li", { text: "回主畫面，長按空白處 → 左上角的編輯／＋ → 找 Scriptable → 選大小 → 加入小工具。" }),
-        h("li", { text: "長按剛加的小工具 → 編輯小工具 → Script 選「台語每日一詞」。" })),
-      h("div.row.wrap", null,
-        h("button.btn.primary", { type: "button", disabled: !widgetCode, onclick: function () { U.copy(widgetCode, "小工具程式"); } }, U.icon("copy"), widgetCode ? "複製小工具程式" : "程式載入中…"),
-        h("button.btn.ghost", { type: "button", disabled: !words.length, onclick: function () {
-          U.copy("TAIGI-NOTEBOOK:" + JSON.stringify(words), "生字簿（" + words.length + " 個詞）");
-        } }, "複製生字簿給小工具")),
-      h("p.hint", { text: "想讓小工具輪流出現你生字簿裡的詞：按「複製生字簿給小工具」，再到 Scriptable 裡點一下那支程式，選「從剪貼簿匯入生字簿」。生字簿有更新時再做一次。" }));
-  }
-
   function aboutCard() {
     var m = D.meta || {};
     return h("div.card", null,
@@ -154,21 +112,12 @@
   function render() {
     if (!el) return;
     U.clear(el);
-    U.add(el, [settingsCard(), fixesCard(), widgetCard(), backupCard(), aboutCard()]);
-  }
-
-  function loadWidget() {
-    if (widgetCode || !root.fetch) return;
-    root.fetch("widget/TaigiDaily.js").then(function (r) { return r.ok ? r.text() : ""; }).then(function (t) {
-      widgetCode = t || "";
-      render();
-    }).catch(function () { /* the button stays disabled */ });
+    U.add(el, [settingsCard(), backupCard(), aboutCard()]);
   }
 
   function mount(node) {
     el = node;
     render();
-    loadWidget();
   }
 
   store.on(function () { render(); });
