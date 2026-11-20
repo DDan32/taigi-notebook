@@ -1,8 +1,8 @@
-/* 「更多」分頁：聲調設定與聲調表、備份、資料來源。 */
+/* 「更多」分頁：聲調設定與聲調表、備份，以及授權要求的一行出處。 */
 (function (root) {
   "use strict";
   var TG = root.TG;
-  var U = TG.ui, h = U.h, T = TG.tailo, S = TG.sandhi, D = TG.dict, store = TG.store, srs = TG.srs;
+  var U = TG.ui, h = U.h, T = TG.tailo, S = TG.sandhi, store = TG.store, srs = TG.srs;
 
   var el = null;
   var backupDraft = "";
@@ -97,22 +97,17 @@
       } }, "匯入備份"));
   }
 
-  function aboutCard() {
-    var m = D.meta || {};
-    return h("div.card", null,
-      h("div.card-head", null, h("h2", { text: "資料來源" })),
-      h("p", null, "詞條、釋義、例句出自",
-        h("a", { href: "https://sutian.moe.edu.tw/zh-hant/", target: "_blank", rel: "noopener" }, "教育部《臺灣台語常用詞辭典》"),
-        "，依創用CC 姓名標示-禁止改作 3.0 臺灣授權使用，內容沒有改寫。" + (m.entries ? "收錄 " + m.entries + " 筆詞目、" + m.examples + " 句例句。" : "")),
-      h("p", { text: "詞條和例句的錄音也是教育部的，為了能放上網站，轉成了較小的檔案（單聲道、32 kbps），聲音內容沒有改。" }),
-      h("p", { text: "華語和台語的對應表、變調的標示、今日一詞的挑選、諺語搜尋用的同義詞和關鍵詞，是這個網站用辭典的釋義和例句自動整理、推算或另外撰寫的，不是辭典原有的內容，會有錯。諺語的「意思」搜尋找的是關鍵字和相近說法，不是真的理解語意。拿不準的地方以老師和辭典為準。" }),
-      h("p.muted", { text: "這不是教育部的網站。" }));
+  // 授權（姓名標示）要求標出處，所以「資料來源」卡片拿掉後，留這一行
+  function sourceLine() {
+    return h("p.source", null, "辭典內容與錄音出自",
+      h("a", { href: "https://sutian.moe.edu.tw/zh-hant/", target: "_blank", rel: "noopener" }, "教育部《臺灣台語常用詞辭典》"),
+      "，創用CC 姓名標示-禁止改作 3.0 臺灣。這不是教育部的網站。");
   }
 
   function render() {
     if (!el) return;
     U.clear(el);
-    U.add(el, [settingsCard(), backupCard(), aboutCard()]);
+    U.add(el, [settingsCard(), backupCard(), sourceLine()]);
   }
 
   function mount(node) {
