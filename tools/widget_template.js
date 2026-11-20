@@ -40,9 +40,9 @@ function pick(list, d, salt) {
 
 function sandhi(tone, stop, beforeA) {
   if (beforeA) {
-    return { 1: 7, 2: 1, 3: 1, 4: stop === "h" ? 1 : 8, 5: 7, 7: 7, 8: stop === "h" ? 7 : 4 }[tone] || tone;
+    return { 1: 7, 2: 1, 3: 1, 4: 8, 5: 7, 7: 7, 8: 4 }[tone] || tone;
   }
-  return { 1: 7, 2: 1, 3: 2, 4: stop === "h" ? 2 : 8, 5: TONE5_BECOMES, 7: 3, 8: stop === "h" ? 3 : 4 }[tone] || tone;
+  return { 1: 7, 2: 1, 3: 2, 4: 8, 5: TONE5_BECOMES, 7: 3, 8: 4 }[tone] || tone;
 }
 
 /** "kin1-a2-jit8" → "kin7-a1-jit8"；空白分開的每個詞各自算；"--" 之後是輕聲。 */

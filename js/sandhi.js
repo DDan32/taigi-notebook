@@ -22,11 +22,11 @@
       case 1: return 7;
       case 2: return 1;
       case 3: return 2;
-      case 4: return stop === "h" ? 2 : 8;
+      case 4: return 8;                 // 入聲一律：4 變高（8）、8 變低（4），-h 結尾也一樣
       case 5: return opts && opts.t5 === 3 ? 3 : 7;
       case 6: return 3;
       case 7: return 3;
-      case 8: return stop === "h" ? 3 : 4;
+      case 8: return 4;
       default: return tone;
     }
   }
@@ -37,11 +37,11 @@
       case 1: return 7;
       case 2: return 1;
       case 3: return 1;
-      case 4: return stop === "h" ? 1 : 8;
+      case 4: return 8;
       case 5: return 7;
       case 6: return 7;
       case 7: return 7;
-      case 8: return stop === "h" ? 7 : 4;
+      case 8: return 4;
       default: return tone;
     }
   }

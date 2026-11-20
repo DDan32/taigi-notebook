@@ -9,13 +9,13 @@ function run(text, mode, fix) {
 }
 
 const cases = [
-  ["我今天要去學校上課。", "huayu", "我今仔日欲去學校上課。", "Guá kin-á-ji̍t beh khì ha̍k-hāu siōng-khò.", "gua1 kin7-a1-jit8 beh2 khi2 hak4-hau7 siong3-kho3."],
-  ["你吃飽了嗎？", "huayu", "你食飽未？", "Lí tsia̍h-pá--buē?", "li1 tsiah3-pa2--bue0?"],
+  ["我今天要去學校上課。", "huayu", "我今仔日欲去學校上課。", "Guá kin-á-ji̍t beh khì ha̍k-hāu siōng-khò.", "gua1 kin7-a1-jit8 beh8 khi2 hak4-hau7 siong3-kho3."],
+  ["你吃飽了嗎？", "huayu", "你食飽未？", "Lí tsia̍h-pá--buē?", "li1 tsiah4-pa2--bue0?"],
   ["這個多少錢？", "huayu", "這个偌濟錢？", "Tsit ê guā-tsē tsînn?", "tsit8 e7 gua3-tse3 tsinn5?"],
   ["這本書是我的。", "huayu", "這本冊是我的。", "Tsit pún tsheh sī guá--ê.", "tsit8 pun1 tsheh4 si3 gua2--e0."],
-  ["伊欲去佗位？", "taigi", "伊欲去佗位？", "I beh khì tó-uī?", "i7 beh2 khi2 to1-ui7?"],
-  ["gua2 beh4 khi3 tai5-pak4", "tailo", "我欲去臺北", "Guá beh khì Tâi-pak", "gua1 beh2 khi2 Tai7-pak4"],
-  ["Lí tsia̍h-pá--buē?", "tailo", "你食飽未?", "Lí tsia̍h-pá--buē?", "li1 tsiah3-pa2--bue0?"],
+  ["伊欲去佗位？", "taigi", "伊欲去佗位？", "I beh khì tó-uī?", "i7 beh8 khi2 to1-ui7?"],
+  ["gua2 beh4 khi3 tai5-pak4", "tailo", "我欲去臺北", "Guá beh khì Tâi-pak", "gua1 beh8 khi2 Tai7-pak4"],
+  ["Lí tsia̍h-pá--buē?", "tailo", "你食飽未?", "Lí tsia̍h-pá--buē?", "li1 tsiah4-pa2--bue0?"],
   ["gua2 e5 tsheh4", "tailo", "我的冊", "Guá ê tsheh", "gua1 e7 tsheh4"],
   ["我是高雄人。", "huayu", "我是高雄人。", "Guá sī Ko-hiông lâng.", "gua1 si3 Ko7-hiong7 lang5."],
   ["有人說他很忙。", "huayu", "有人講伊真無閒。", "Ū lâng kóng i tsin bô-îng.", "u3 lang7 kong1 i7 tsin7 bo7-ing5."],
