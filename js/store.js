@@ -15,7 +15,7 @@
   "use strict";
   var TG = (root.TG = root.TG || {});
   var PREFIX = "taigi.v1.";
-  var TOMBSTONE_DAYS = 30;
+  var TOMBSTONE_DAYS = 30;            // a deletion record is kept on the device this long; the cloud keeps its copy
   var RETRY_MS = 1500;
 
   // ---- validation ------------------------------------------------------------------
@@ -495,16 +495,15 @@
       var remote = dict();
       snap.docs.forEach(function (d) { var r = CLEAN[kind](d.data()); if (r) remote[r.id] = r; });
       mergeRemote(kind, snap.docs);
+      // Old deletion records are dropped from this device only. The cloud copy stays: a device that
+      // was not opened for a month still has the live word, and without the record it would upload
+      // the word again as if it were new, bringing it back on every device.
       var cutoff = Date.now() - TOMBSTONE_DAYS * 86400000;
       Object.keys(state[kind]).forEach(function (id) {
         var mine = state[kind][id];
         var theirs = remote[id];
-        if (mine.del && mine.u < cutoff) {
-          delete state[kind][id];
-          if (theirs) chain(kind + "/" + id, function () { return refs[kind].doc(id).delete(); });
-          return;
-        }
         if (!theirs || mine.u > theirs.u) pushDoc(kind, mine);
+        if (mine.del && mine.u < cutoff) delete state[kind][id];
       });
       write(kind, state[kind]);
       refs[kind].onSnapshot(function (s) { mergeRemote(kind, s.docs); }, function () { setCloud("local"); });

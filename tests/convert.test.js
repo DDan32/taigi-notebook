@@ -29,8 +29,34 @@ for (const [src, mode, hanji, tailo, actual] of cases) {
   }
 }
 
+// 我們: 咱 when the listener is included (invitations, together, goodbyes), 阮 otherwise
+for (const [src, want] of [
+  ["我們一起去公園散步吧。", "咱"], ["我們明天見。", "咱"], ["大家好，我們今天學台語。", "咱"], ["讓我們開始。", "咱"],
+  ["我們是台灣人。", "阮"], ["他們不認識我們。", "阮"], ["我們去吃飯，你要來嗎？", "阮"],
+  ["我們走吧！他們不去。", "咱"],
+]) {
+  const segs = run(src).segs.filter(s => s.kind === "seg" && s.src === "我們");
+  const got = segs.length ? C.current(segs[0]).hanji : "(no 我們 segment)";
+  if (got !== want) { fail++; console.log(`FAIL 我們 in ${src}: got ${got}, want ${want}`); }
+}
+// 台語漢字的「的」：接名詞讀 ê，句尾和接副詞讀輕聲（辭典把輕聲排第一）
+for (const [src, want] of [
+  ["買果子的錢，一人愛出一半。", "kué-tsí ê tsînn"], ["伊對伊的學生真嚴格。", "i ê ha̍k-sing"],
+  ["這本冊是阮的。", "guán--ê."], ["物件買二手的較俗。", "jī-tshiú--ê khah"],
+]) {
+  const got = run(src, "taigi").tailo;
+  if (!got.includes(want)) { fail++; console.log(`FAIL 的 in ${src}: ${got} (want …${want}…)`); }
+}
+
+// the cue only looks inside its own sentence
+let r = run("我們是學生。大家一起來。");
+if (C.current(r.segs.find(s => s.src === "我們")).hanji !== "阮") { fail++; console.log("FAIL 我們 cue leaked across sentences"); }
+// a saved choice for 我們 still wins over the context rule
+r = run("我們一起去。", "huayu", { word: { "我們": { h: "阮", t: "guán" } }, read: {} });
+if (!r.hanji.startsWith("阮")) { fail++; console.log("FAIL 我們 fix.word:", r.hanji); }
+
 // a saved word choice wins; a saved reading replaces the dictionary's
-let r = run("我喜歡你。", "huayu", { word: { "喜歡": { h: "愛", t: "ài" } }, read: {} });
+r = run("我喜歡你。", "huayu", { word: { "喜歡": { h: "愛", t: "ài" } }, read: {} });
 if (r.hanji !== "我愛你。") { fail++; console.log("FAIL fix.word:", r.hanji); }
 r = run("我喜歡你。", "huayu", { word: { "喜歡": { h: "合意", t: "kah-ì" } }, read: {} });
 if (r.hanji !== "我合意你。") { fail++; console.log("FAIL fix.word custom:", r.hanji); }

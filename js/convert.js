@@ -19,11 +19,78 @@
   // characters that only (or almost only) appear in written Taiwanese
   var TAIGI_MARKERS = "欲毋袂佇咧矣𪜶阮恁啥佗遮遐媠囡𠢕𨑨迌閣攏嘛予佮濟偌啉睏厝跤喙揣捌拄𤆬𫝛𬦰𫞼𥴊个爿囝翁歹挵搝𢯾毋甘焦𧮙𤺪𣁳粿箍";
 
+  // ---- 判斷輸入的是華語還是台語漢字 ----------------------------------------------------
+  //
+  // 只看特定字（欲、佇、咧…）的話，教育部例句裡的台語句子有一半以上判成華語：
+  // 「伊一面做工，一面讀冊」「做牛著拖，做人著磨」都沒有這些字。所以改用字頻模型：
+  // data/lang.json 是用辭典例句（台語原文對照華語翻譯）算出的單字、雙字、句尾字的對數比，
+  // 由 tools/build_lang.js 產生。加總 > 0 偏台語，< 0 偏華語。只有在這些字幾乎不會出現在
+  // 華語裡時，才額外加分。
+
+  var HAN_CHAR = /^(?:[〇㐀-鿿豈-﫿]|[\ud840-\ud88f][\udc00-\udfff])$/;
+  // 現代華語書面幾乎不用的字（閣、予、甘、濟這類華語也常見的字不放）
+  var STRONG_TAIGI = Array.from("𪜶佇咧矣毋袂媠啥佗遮遐囡𠢕𨑨迌攏佮偌啉睏厝跤喙揣捌𤆬个囝挵搝𢯾𧮙𤺪𣁳粿箍恁");
+  var STRONG_BONUS = 4;
+  var SHORT = 5;   // 少於這麼多個漢字：證據太少，先看辭典
+  // 兩邊都說得通的句子（我是高雄人）照華語逐詞對應：證據要超過這個值才當台語。
+  // 用例句測試：5 字以上的句子，台語判對 96.6%（原本只看特定字是 71%），華語 99.1%（原本 98.8%）。
+  var LEAN = 1;
+
+  /** 模型用的特徵：每個漢字、相鄰兩字（含句首 ^），和句尾字（字$）。build_lang.js 用同一個函式。 */
+  function langFeatures(text) {
+    var out = [], prev = "^";
+    Array.from(String(text).normalize("NFC")).forEach(function (c) {
+      if (HAN_CHAR.test(c)) { out.push(c, prev + c); prev = c; }
+      else { if (prev !== "^") out.push(prev + "$"); prev = "^"; }
+    });
+    if (prev !== "^") out.push(prev + "$");
+    return out;
+  }
+
+  /** > 0 像台語，< 0 像華語，0 沒有證據。 */
+  function langScore(text) {
+    var w = D.lang, x = 0;
+    if (w) langFeatures(text).forEach(function (f) { var v = w[f]; if (typeof v === "number") x += v; });
+    Array.from(text).forEach(function (c) {
+      if (w ? STRONG_TAIGI.indexOf(c) >= 0 : TAIGI_MARKERS.indexOf(c) >= 0) x += STRONG_BONUS;
+    });
+    return x;
+  }
+
+  /** 只有一個詞的輸入：辭典就能回答大部分情況。回傳 "taigi" / "huayu" / ""（兩邊都說得通）。 */
+  function wordMode(word) {
+    var tg = D.byHanji.has(word);
+    var hy = D.huayuCandidates(word);
+    // 華語查到的台語說法是別的詞（走 → 行），而且不只是「跟台語同字」這一個來源
+    var differs = hy.some(function (c) { return c.hanji !== word && (c.src & ~D.SRC.SAME); });
+    if (tg && !differs) return "taigi";      // 睏、媠、讀冊；食、水這種兩邊同字的，當台語讀結果一樣
+    if (!tg && hy.length) return "huayu";    // 吃、漂亮
+    return "";                               // 走、行：兩種讀法都合理
+  }
+
   function detectMode(text) {
     if (T.looksRomanized(text)) return "tailo";
-    var chars = Array.from(text);
-    for (var i = 0; i < chars.length; i++) if (TAIGI_MARKERS.indexOf(chars[i]) >= 0) return "taigi";
-    return "huayu";
+    var han = Array.from(text).filter(function (c) { return HAN_CHAR.test(c); }).join("");
+    if (Array.from(han).length < SHORT && han === text.replace(/[\s。！？!?，,、；;：:「」『』（）()…]+/g, "")) {
+      var m = wordMode(han);
+      if (m) return m;
+    }
+    return langScore(text) > LEAN ? "taigi" : "huayu";
+  }
+
+  /** 單一個詞的另一種讀法：輸入「走」時，台語的「走 tsáu」和華語「走」的台語說法「行 kiânn」都列出來。
+   *  main 是畫面上現在選的那個說法；另一種讀法跟它一樣（學校、食）就不列。 */
+  function otherReading(text, mode, main) {
+    var w = text.replace(/[\s。！？!?，,、；;：:]+/g, "");
+    if (!w || Array.from(w).length >= SHORT || !Array.from(w).every(function (c) { return HAN_CHAR.test(c); })) return null;
+    var other = mode === "huayu" ? "taigi" : mode === "taigi" ? "huayu" : "";
+    if (!other) return null;
+    var c = (other === "taigi" ? taigiCands(w) : huayuCands(w))[0];
+    if (!c || !c.entry) return null;
+    if (other === "taigi" && c.hanji !== w) return null;
+    main = main || (mode === "taigi" ? taigiCands(w) : huayuCands(w))[0];
+    if (main && (sameCand(main, c) || (main.entry && main.entry === c.entry))) return null;
+    return { mode: other, cand: c };
   }
 
   // ---- candidates -----------------------------------------------------------
@@ -201,7 +268,7 @@
   }
 
   function fromTaigi(text, fix) {
-    return splitText(text, function (chars, acc) {
+    var out = splitText(text, function (chars, acc) {
       splitRun(chars, hasTaigi, function (w) {
         var l = D.byHanji.get(w);
         return l && l.length ? Math.min(l[0].freq, 200) / 800 : 0;
@@ -211,6 +278,20 @@
         if (fix && fix.read) c = applyFixes(w, c, { read: fix.read });
         acc.push(seg(w, c));
       });
+    });
+    taigiContext(out);
+    return out;
+  }
+
+  /** 台語漢字的「的」：後面接名詞（我的冊、買果子的錢）讀 ê；句尾（是我的）或後面接副詞（二手的較俗）是輕聲 --ê。
+   *  辭典把輕聲那條排在前面，不調整的話一句裡的「的」幾乎都會標成輕聲。 */
+  function taigiContext(segs) {
+    segs.forEach(function (s, i) {
+      if (s.kind !== "seg" || s.src !== "的" || s.cands.some(function (c) { return c.fixed; })) return;
+      var nx = segs[i + 1];
+      // 後面接副詞、助動詞（二手的較俗、賣的欲走）：「的」把前面變成名詞，讀輕聲。接動詞不算：感謝逐家的疼惜
+      var neutral = !nx || nx.kind === "punct" || /^(副詞|助動詞)$/.test(topPos(nx));
+      pickWhere(s, function (c) { return c.hanji === "的" && T.toPlain(c.tailo) === (neutral ? "--e" : "e"); });
     });
   }
 
@@ -271,8 +352,26 @@
     return false;
   }
 
+  var SENTENCE_END = /[。！？!?；;]/;
+  // 華語「我們」不分包不包含聽話的人；台語分「咱」(包含) 和「阮」(不包含)。
+  // 邀約、一起做的事、道別時多半包含對方：我們一起去、大家…、我們走吧、我們明天見。
+  var INCLUSIVE = /一起|一塊|一同|大家|咱|讓我們|我們來|吧|見面|再見|見$/;
+
+  /** 第 i 段所在那一句的華語原文（到句號、問號、驚嘆號為止）。 */
+  function sentenceOf(segs, i) {
+    var a = i, b = i;
+    while (a > 0 && !(segs[a - 1].kind === "punct" && SENTENCE_END.test(segs[a - 1].text))) a--;
+    while (b < segs.length - 1 && !(segs[b + 1].kind === "punct" && SENTENCE_END.test(segs[b + 1].text))) b++;
+    return segs.slice(a, b + 1).map(function (x) { return x.kind === "punct" ? x.text : x.src; }).join("")
+      .replace(/[，,、：:「」『』（）()\s]+$/, "");
+  }
+
   function contextual(segs, fix) {
     segs.forEach(function (s, i) {
+      if (s.kind === "seg" && s.src === "我們" && !(fix && fix.word && fix.word[s.src]) && INCLUSIVE.test(sentenceOf(segs, i))) {
+        pickWhere(s, function (c) { return c.hanji === "咱" && T.toPlain(c.tailo) === "lan"; });
+        return;
+      }
       if (s.kind !== "seg" || (fix && fix.word && fix.word[s.src])) return;
       var nx = segs[i + 1];
       var atEnd = !nx || nx.kind === "punct";
@@ -370,6 +469,10 @@
 
   TG.convert = {
     detectMode: detectMode,
+    langFeatures: langFeatures,
+    langScore: langScore,
+    wordMode: wordMode,
+    otherReading: otherReading,
     convert: convert,
     fromHuayu: fromHuayu,
     fromTaigi: fromTaigi,

@@ -81,7 +81,8 @@ const settle = () => new Promise(r => setTimeout(r, 120));
   check(store.listWords().map(x => x.id).sort().join() === "a,b,c", "merged words: " + store.listWords().map(x => x.id));
   check(store.state.words.b.m === "local edit" && db.docs[`${base}/words/b`].m === "local edit", "newer local copy wins and is pushed");
   check(!!db.docs[`${base}/words/a`], "local-only word pushed");
-  check(!(`${base}/words/old` in db.docs) && !store.state.words.old, "old tombstone purged on both sides");
+  check(!store.state.words.old && db.docs[`${base}/words/old`] && db.docs[`${base}/words/old`].del === true,
+    "old tombstone dropped on this device, kept in the cloud");
   check(store.state.settings.t5 === 7 && store.state.settings.contour === false && store.state.fix.word["喜歡"].h === "愛" && store.state.meta.streak === 4, "newer remote profile adopted");
 
   // 3. later changes are written through, one at a time
@@ -110,6 +111,25 @@ const settle = () => new Promise(r => setTimeout(r, 120));
   await store.connect();
   await new Promise(r => setTimeout(r, 1800));
   check(!!db2.docs[`${base}/words/r1`] && store.cloud.status === "synced", "retry after 'unavailable': " + store.cloud.status);
+
+  // 5b. a device not opened for over a month still has a word that was deleted elsewhere long ago:
+  //     the cloud's old deletion record wins, and the word is not uploaded again
+  const longAgo = Date.now() - 45 * 86400000;
+  const db3 = fakeDb({ [`${base}/words/s1`]: { id: "s1", del: true, c: 1, u: longAgo } });
+  store = await load(fakeStorage({ "taigi.v1.words": JSON.stringify({ s1: { id: "s1", h: "鹹", t: "kiâm", c: 1, u: longAgo - 86400000 } }) }),
+    { use: async (name) => (name === "db" ? db3.api : name === "user" ? { id: async () => UID } : null) });
+  await store.connect();
+  await settle();
+  check(!store.findWord("鹹") && db3.docs[`${base}/words/s1`].del === true && db3.log.sets.length === 0,
+    "stale device does not bring back an old deletion");
+  // and a device whose own old deletion never reached the cloud uploads it before forgetting it
+  const db4 = fakeDb({});
+  store = await load(fakeStorage({ "taigi.v1.words": JSON.stringify({ s2: { id: "s2", del: true, c: 1, u: longAgo } }) }),
+    { use: async (name) => (name === "db" ? db4.api : name === "user" ? { id: async () => UID } : null) });
+  await store.connect();
+  await settle();
+  check(!store.state.words.s2 && db4.docs[`${base}/words/s2`] && db4.docs[`${base}/words/s2`].del === true,
+    "old local deletion is uploaded before it is dropped");
 
   // 6. signed out / capability missing: stay local without throwing
   store = await load(fakeStorage(), { use: async () => null });

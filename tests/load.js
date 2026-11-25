@@ -14,6 +14,7 @@ TG.dict.set("daily", read("daily.json"));
 TG.dict.set("synonyms", read("synonyms.json"));
 TG.dict.set("audio", read("audio.json"));
 TG.dict.set("proverbKw", read("proverb_kw.json"));
+if (fs.existsSync(path.join(root, "data", "lang.json"))) TG.dict.set("lang", read("lang.json").w);
 require("../js/convert.js");
 require("../js/proverb.js");
 require("../js/audio.js");

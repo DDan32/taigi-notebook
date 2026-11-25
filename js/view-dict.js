@@ -82,9 +82,10 @@
     }));
   }
 
-  function entryBody(e) {
+  /** opts.inline：放在轉換頁的結果下面時，上面已經畫過本調與變調，這裡就不重畫。 */
+  function entryBody(e, opts) {
     var o = { t5: store.state.settings.t5 };
-    var a = e.tailo ? U.analysePair(e.hanji, e.tailo, o) : null;
+    var a = e.tailo && !(opts && opts.inline) ? U.analysePair(e.hanji, e.tailo, o) : null;
     var inBook = store.findWord(e.hanji, e.tailo);
     var num = e.tailo ? T.toNumeric(e.tailo) : "";
     var alts = e.x.a || [];
@@ -159,5 +160,5 @@
   }
 
   TG.views = TG.views || {};
-  TG.views.dict = { mount: mount, onData: onData, openEntry: openEntry, search: function (q) { els.q.value = q; search(q); } };
+  TG.views.dict = { mount: mount, onData: onData, openEntry: openEntry, entryBody: entryBody, search: function (q) { els.q.value = q; search(q); } };
 })(window);

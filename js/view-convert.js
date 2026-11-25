@@ -6,8 +6,8 @@
 
   var SAMPLE = "我今天要去學校上課。";
   var MAX_INPUT = 500;      // 一次轉換的字數上限：太長會畫出幾千個格子，整頁卡住
-  var MODES = [["auto", "自動判斷"], ["huayu", "華語"], ["taigi", "台語漢字"], ["tailo", "台羅"]];
-  var MODE_NAME = { huayu: "華語逐詞對應", taigi: "台語漢字標音", tailo: "台羅標調" };
+  // 輸入的種類由程式判斷（convert.detectMode），結果上方的標籤說明判斷成什麼
+  var MODE_NAME = { huayu: "當華語：逐詞對應", taigi: "當台語漢字：標音", tailo: "當台羅：標調" };
 
   var cur = { src: "", mode: "auto", used: "", segs: [], tokens: [], sample: false, restored: false };
   var els = {};
@@ -56,7 +56,8 @@
     cur.src = text;
     cur.mode = mode || cur.mode;
     var saved = fresh ? null : store.recall(text);
-    if (saved && (cur.mode === "auto" || saved.mode === cur.mode)) {
+    // 沒改過的舊結果重新判斷一次（判斷方式可能已經改進）；自己更正過的才沿用
+    if (saved && saved.edited && (cur.mode === "auto" || saved.mode === cur.mode)) {
       cur.used = saved.mode;
       cur.segs = unpack(saved.segs, saved.mode);
       cur.restored = !!saved.edited;
@@ -207,7 +208,7 @@
     var actions = h("div.row.wrap", null,
       cur.sample ? null : h("button.btn", { type: "button", onclick: saveSentence }, U.icon("star"), "收藏這句"),
       cur.restored ? h("button.btn.ghost", { type: "button", onclick: function () { run(cur.src, cur.mode, true); U.toast("已重新對應"); } }, U.icon("undo"), "丟掉我的更正，重新對應") : null);
-    var note = cur.used === "huayu"
+    var note = cur.used === "huayu" && !singleSeg()
       ? h("p.note", { text: "這是逐詞對應，不是翻譯：語序和句型要自己調整。每個詞都可以換說法、改發音、改聲調、前後移動。" })
       : null;
     U.add(box, [head, cur.restored ? h("p.note.ok", { text: "已套用你上次對這句話的更正。" }) : null, line, playBar(), legend, outs, actions, note]);
@@ -225,6 +226,8 @@
   // ---- related examples from the dictionary -------------------------------------------
 
   var PROVERB_MIN = 28;       // scores of a real match are 40 and up; unrelated sentences stay under about 21
+  // 一句話裡的單字詞：這些詞性的字到處都是（我、的、佇、欲…），找例句沒有意義
+  var FUNCTION_POS = { "代詞": 1, "助詞": 1, "介詞": 1, "連詞": 1, "副詞": 1, "助動詞": 1, "量詞": 1, "數詞": 1, "方位詞": 1, "疑問詞": 1, "嘆詞": 1 };
 
   /** Proverbs whose meaning is close to what was typed (华語 or 台語漢字 input; not for romanization). */
   function relatedProverbs() {
@@ -233,10 +236,19 @@
     return P.search(cur.src, 6).filter(function (r) { return r.score >= PROVERB_MIN; }).slice(0, 3);
   }
 
+  /** 輸入只有一個詞（台語很多一個字就是一個詞：食、行、睏）時，那一段；否則 null。 */
+  function singleSeg() {
+    if (cur.sample) return null;
+    var segs = cur.segs.filter(function (s) { return s.kind === "seg"; });
+    return segs.length === 1 ? segs[0] : null;
+  }
+
   function renderRelated() {
     var box = els.related;
     U.clear(box);
     if (cur.sample || !cur.segs.length) return;
+    var one = singleSeg();
+    if (one) { renderWord(box, one); return; }
     var prov = relatedProverbs();
     if (prov.length) {
       U.add(box, h("div.card", null,
@@ -244,26 +256,120 @@
         h("ul.proverb-list", null, prov.map(function (r) { return TG.views.proverb.row(r); })),
         h("p.hint", { text: "依你輸入的意思找的，請看釋義確認是不是想表達的。" })));
     }
-    if (!D.examples) return;
-    var keys = [];
-    cur.segs.forEach(function (s) {
-      if (s.kind !== "seg") return;
-      var c = C.current(s);
-      if (c && c.hanji && c.hanji.length >= 2 && keys.indexOf(c.hanji) < 0) keys.push(c.hanji);
-    });
-    keys.sort(function (a, b) { return b.length - a.length; });
-    var seen = {}, rows = [];
-    keys.slice(0, 4).forEach(function (k) {
-      D.searchExamples(k, 3).forEach(function (ex) {
-        if (seen[ex[0]] || rows.length >= 6) return;
-        seen[ex[0]] = 1;
-        rows.push(ex);
-      });
-    });
+    var rows = sentenceExamples();
     if (!rows.length) return;
     U.add(box, h("div.card", null,
       h("div.card-head", null, h("h2", { text: "辭典裡的相關例句" }), h("span.tag", { text: "教育部辭典" })),
       h("ul.ex-list", null, rows.map(function (ex) { return exampleItem(ex); }))));
+  }
+
+  /** 一句話裡各詞的例句：長的詞優先；一個字的實詞（食、行、媠）也算，用辭典裡那個義項自己的例句。 */
+  function sentenceExamples() {
+    if (!D.examples) return [];
+    var words = [];
+    cur.segs.forEach(function (s) {
+      if (s.kind !== "seg") return;
+      var c = C.current(s);
+      if (!c || !c.hanji || words.some(function (w) { return w.c.hanji === c.hanji; })) return;
+      var single = Array.from(c.hanji).length === 1;
+      if (single && (!c.entry || FUNCTION_POS[D.posOf(c.entry, c.sense)] || !D.posOf(c.entry, c.sense))) return;
+      words.push({ c: c, n: Array.from(c.hanji).length });
+    });
+    words.sort(function (a, b) { return b.n - a.n; });
+    var seen = {}, rows = [];
+    var add = function (ex) { if (ex && !seen[ex[0]] && rows.length < 6) { seen[ex[0]] = 1; rows.push(ex); return true; } return false; };
+    words.slice(0, 5).forEach(function (w) {
+      var c = w.c, got = 0;
+      if (c.entry) {
+        var own = c.sense >= 0 ? D.examplesOf(c.entry, c.sense) : [];
+        if (!own.length) c.entry.senses.some(function (s, i) { own = D.examplesOf(c.entry, i); return own.length; });
+        own.slice(0, 2).forEach(function (ex) { if (add(ex)) got++; });
+      }
+      if (!got && w.n >= 2) D.searchExamples(c.hanji, 2).forEach(add);
+    });
+    return rows;
+  }
+
+  /** 台語例句裡含有這個詞的（不含詞條本身已經列出的）。只看台語原文：一個字時看華語翻譯會找到一堆不相干的。 */
+  function examplesContaining(word, skip, limit) {
+    var out = [];
+    if (!D.examples) return out;
+    for (var i = 0; i < D.examples.length && out.length < 60; i++) {
+      var ex = D.examples[i];
+      if (ex[0].indexOf(word) >= 0 && !skip[ex[0]]) out.push(ex);
+    }
+    out.sort(function (a, b) { return a[0].length - b[0].length; });
+    return out.slice(0, limit);
+  }
+
+  /** 單一個詞：詞條（釋義、各義項例句）、另一種讀法、含有這個詞的諺語和例句。 */
+  function renderWord(box, seg) {
+    var c = C.current(seg);
+    if (!c) return;
+    var e = c.entry;
+    var word = c.hanji;
+    // 另一種讀法放最上面，詞條可能很長：「走」當華語是「行 kiânn」，當台語是「走 tsáu」（跑）
+    var alt = cur.used === "tailo" ? null : C.otherReading(cur.src, cur.used, c);
+    if (alt) {
+      var a = alt.cand;
+      U.add(box, h("div.card", null,
+        h("div.card-head", null, h("h2", { text: "也可能是" }),
+          h("span.tag", { text: alt.mode === "taigi" ? "當台語漢字" : "當華語" })),
+        h("p", { text: alt.mode === "taigi"
+          ? "「" + cur.src + "」在台語裡也是一個詞，意思不一樣："
+          : "如果「" + cur.src + "」是華語，台語的說法是：" }),
+        h("div.entry-head", null,
+          h("span.hj", { lang: "nan-Hant", text: a.hanji }),
+          h("span.tl", { lang: "nan-Latn", text: a.tailo })),
+        a.entry ? h("p.def", { text: D.shortDef(a.entry, a.sense) }) : null,
+        h("div.row.wrap", null,
+          h("button.btn.primary", { type: "button", onclick: function () {
+            run(cur.src, alt.mode, true);
+            // 記成「自己更正過」：下次再輸入同一個詞，沿用這個讀法
+            store.remember({ src: cur.src, mode: cur.used, segs: pack(cur.segs), edited: true });
+            U.toast("已改用「" + a.hanji + " " + a.tailo + "」");
+          } }, "改用這個"),
+          a.entry ? h("button.btn.ghost", { type: "button", onclick: function () { TG.views.dict.openEntry(a.entry); } }, U.icon("book"), "看詞條") : null)));
+    }
+
+    if (e) {
+      U.add(box, h("div.card.word-entry", null,
+        h("div.card-head", null, h("h2", { text: "詞條" }), h("span.tag", { text: "教育部辭典" })),
+        TG.views.dict.entryBody(e, { inline: true })));
+    } else {
+      U.add(box, h("p.note", { text: "辭典沒有收「" + word + "」這個詞，上面的讀音是逐字拼的，請確認。" }));
+    }
+
+    // 諺語：先找寫法裡有這個詞的；沒有才用意思找
+    var P = TG.proverb;
+    if (P && P.ready) {
+      var all = P.search(word, 200).filter(function (r) { return r.why === "text"; });
+      var prov = all.slice(0, 4);
+      var byMeaning = !prov.length;
+      if (byMeaning) prov = relatedProverbs();
+      if (prov.length) {
+        U.add(box, h("div.card", null,
+          h("div.card-head", null, h("h2", { text: byMeaning ? "意思相近的諺語" : "有「" + word + "」的諺語" }), h("span.tag", { text: "教育部辭典" })),
+          h("ul.proverb-list", null, prov.map(function (r) { return TG.views.proverb.row(r); })),
+          all.length > prov.length ? h("button.btn.ghost", { type: "button", onclick: function () { TG.app.go("proverb"); TG.views.proverb.search(word); } },
+            "看全部 " + all.length + " 句", U.icon("right")) : null));
+      }
+    }
+
+    // 其他例句：詞條裡已經列過的不再重複
+    if (!D.examples) {
+      U.add(box, h("p.muted", { text: "例句載入中…" }));
+      return;
+    }
+    var skip = {};
+    if (e) e.senses.forEach(function (s, i) { D.examplesOf(e, i).forEach(function (ex) { skip[ex[0]] = 1; }); });
+    var more = examplesContaining(word, skip, 5);
+    if (more.length) {
+      U.add(box, h("div.card", null,
+        h("div.card-head", null, h("h2", { text: "其他用到「" + word + "」的例句" }), h("span.tag", { text: "教育部辭典" })),
+        h("ul.ex-list", null, more.map(function (ex) { return exampleItem(ex); })),
+        h("button.btn.ghost", { type: "button", onclick: function () { TG.app.go("dict"); TG.views.dict.search(word); } }, U.icon("book"), "在辭典查「" + word + "」")));
+    }
   }
 
   function exampleItem(ex) {
@@ -297,7 +403,6 @@
   function load(src, mode, segs) {
     cur = { src: src, mode: "auto", used: mode, segs: segs, tokens: [], sample: false, restored: false };
     els.text.value = src;
-    setMode("auto");
     refresh(false);
     TG.app.go("convert");
     root.scrollTo(0, 0);
@@ -482,15 +587,6 @@
 
   // ---- input card -----------------------------------------------------------------------------
 
-  function setMode(m) {
-    cur.mode = m;
-    Array.prototype.forEach.call(els.modes.children, function (b) {
-      var on = b.getAttribute("data-mode") === m;
-      b.classList.toggle("on", on);
-      b.setAttribute("aria-pressed", on ? "true" : "false");
-    });
-  }
-
   function renderHistory() {
     var box = els.history;
     U.clear(box);
@@ -511,9 +607,6 @@
     els.text.addEventListener("keydown", function (ev) {
       if (ev.key === "Enter" && (ev.metaKey || ev.ctrlKey)) { ev.preventDefault(); go(); }
     });
-    els.modes = h("div.modes", { role: "group", "aria-label": "輸入的是" }, MODES.map(function (m) {
-      return h("button.chip", { type: "button", "data-mode": m[0], "aria-pressed": "false", onclick: function () { setMode(m[0]); if (els.text.value.trim()) go(); } }, m[1]);
-    }));
     els.result = h("div.card.result", { id: "result", "aria-live": "polite" });
     els.loading = h("p.muted", { id: "loading", text: "辭典載入中…第一次開啟要下載約 7 MB。" });
     els.related = h("div", { id: "related" });
@@ -521,20 +614,20 @@
     var go = function () {
       var text = els.text.value.trim();
       if (!text) { U.toast("先輸入一句話"); return; }
-      run(text, cur.mode);
+      run(text, "auto");
       renderHistory();
     };
     els.go = go;
     U.add(el, [
       h("div.card.input", null,
         els.text,
-        h("div.row.between.wrap", null, els.modes,
+        h("div.row.between.wrap", null,
+          h("span.hint", { text: "華語、台語漢字、台羅都可以，會自動判斷" }),
           h("div.row", null,
             h("button.btn.ghost", { type: "button", onclick: function () { els.text.value = ""; els.text.focus(); } }, "清除"),
             h("button.btn.primary", { type: "button", id: "go", onclick: go }, "轉換")))),
       els.history, els.loading, els.result, els.related
     ]);
-    setMode("auto");
     renderHistory();
     showStaticSample();
   }
@@ -548,6 +641,8 @@
   }
 
   store.on(function (what) {
+    // 單詞的詞條卡上有「加入生字簿」，加了之後要更新按鈕
+    if (what === "words" && els.related && singleSeg()) { renderRelated(); return; }
     if (what !== "settings" || !cur.segs.length || !els.result) return;
     if (!D.ready) { showStaticSample(); return; }
     cur.tokens = C.analyse(cur.segs, opts(), cur.used);

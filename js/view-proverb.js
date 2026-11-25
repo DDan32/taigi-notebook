@@ -29,7 +29,9 @@
     var reason = why(r);
     return h("li.proverb", null,
       h("button.proverb-main", { type: "button", onclick: function () { TG.views.dict.openEntry(d.entry); } },
-        h("span.hj.proverb-hj", { lang: "nan-Hant", text: d.hanji }),
+        h("span.hj.proverb-hj", { lang: "nan-Hant" }, r.why === "text" && r.hits[0]
+          ? P.highlight(d.hanji, [r.hits[0]]).map(function (p) { return p.hit ? h("mark", { text: p.text }) : p.text; })
+          : d.hanji),
         h("span.tl.proverb-tl", { lang: "nan-Latn", text: d.tailo }),
         h("span.proverb-meaning", null, marks(d.meaning, r.hits)),
         reason ? h("span.proverb-why", { text: reason }) : null),

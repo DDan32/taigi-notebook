@@ -6,6 +6,7 @@
 
   var els = {};
   var session = null;   // { queue: [id], shown: bool, done: n, extra: bool }
+  var shownDay = "";    // the day the tab was last drawn for
 
   function opts() { return { t5: store.state.settings.t5 }; }
 
@@ -18,6 +19,7 @@
 
   function renderDaily() {
     var box = els.daily;
+    shownDay = srs.dayKey();
     U.clear(box);
     var e = dailyEntry();
     if (!e) { U.add(box, h("p.muted", { text: "辭典載入中…" })); return; }
@@ -150,6 +152,16 @@
   }
 
   function onData() { if (els.daily) { renderDaily(); renderSession(); } }
+
+  /** A page added to the home screen can stay open for days: redraw once the date has changed.
+   *  A review in progress keeps its place; only the counts and today's word move on. */
+  function checkDay() {
+    if (els.daily && srs.dayKey() !== shownDay) { renderDaily(); renderSession(); }
+  }
+  root.document.addEventListener("visibilitychange", function () { if (!root.document.hidden) checkDay(); });
+  root.addEventListener("pageshow", checkDay);
+  root.addEventListener("focus", checkDay);
+  root.setInterval(checkDay, 60000);
 
   store.on(function (what) {
     if (!els.daily) return;

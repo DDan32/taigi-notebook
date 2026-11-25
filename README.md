@@ -3,6 +3,9 @@
 學台語用的網站，主要給手機和平板用。純靜態網頁：沒有伺服器、沒有帳號、沒有追蹤，你記的東西只存在自己的裝置上。
 
 - **轉換**：輸入華語句子，逐詞對應成台語的說法；也可以直接輸入台語漢字或台羅（`gua2 beh4 khi3` 這種數字調也行）。
+  輸入的是哪一種由程式自動判斷，不用選。只輸入一個詞（台語很多一個字就是一個詞：食、行、睏）時，
+  下面直接列出詞條的釋義和例句、有這個詞的諺語、其他例句；兩種讀法都說得通的（「走」當華語是「行」，
+  當台語是「跑」）會列出另一種，點一下就換。
   每個音節標出本調和變調後的聲調，讀本調的字畫底線。每個詞都可以換說法、改發音、改聲調、前後移動。
   台羅、數字調、變調後的實際讀音、漢字各有一個複製鈕。
 - **逐詞聽**：轉換結果可以依序播放每個詞的錄音（切掉頭尾靜音、接得緊一點）。教育部的錄音是各詞單獨唸的本調，
@@ -33,6 +36,9 @@
   入聲一律 4 變 8（高）、8 變 4（低），-h 結尾也一樣（教育部的寫法是 -h 結尾的 4 變 2、8 變 3）。
   臺華共同詞在辭典裡沒有詞性，`tools/pos_overrides.tsv` 是另外補的提示，只用來判斷變調。
 - `data/daily.json`：今日一詞的清單（730 個有例句的常用詞）。
+- `data/lang.json`：判斷輸入是華語還是台語漢字的字頻模型，`tools/build_lang.js` 用辭典例句
+  （台語原文對照華語翻譯）算出來。五個字以上的句子，台語約 97%、華語約 99% 判對；
+  更短的輸入先查辭典，兩種都說得通的就兩種都列。
 - `data/synonyms.json`、`data/proverb_kw.json`：諺語「意思」搜尋用的同義詞和關鍵詞。同義詞一部分從辭典釋義裡並列的詞整理，一部分是
   `tools/synonyms_hand.tsv` 手排的；關鍵詞是 `tools/proverb_keywords.tsv`，由 Claude 逐句讀過釋義後，用日常白話寫的（468 句各 6–12 個）。
   它們只影響搜尋，不會當成辭典的釋義顯示。
@@ -93,6 +99,7 @@ sh tests/run.sh                  # 全部測試
 ```bash
 python3 tools/ods_to_raw.py ~/Downloads/kautian.ods raw   # 試算表 → raw/*.json
 python3 tools/build_data.py --report                      # raw/ → data/，並印出常用華語詞的對應結果
+node tools/build_lang.js                                  # data/examples.json → data/lang.json（--eval 印準確率）
 node tools/build_widget.js                                # data/ → widget/TaigiDaily.js
 python3 tools/build_audio.py <sutiau-mp3 資料夾> <leku-mp3 資料夾> <輸出資料夾> --verify    # 錄音（要有 ffmpeg）
 python3 tools/build_site.py

@@ -208,8 +208,9 @@
           else if (inVariant) add(d, 800, "romanization");
         });
       }
-    } else if (hanQ.length >= 2) {
-      // the query is part of a proverb as written
+    } else if (hanQ) {
+      // the query is part of a proverb as written. One character is enough: in Taiwanese 食、人、錢
+      // are words on their own, and「含有食的諺語」is what someone typing 食 wants to see.
       P.docs.forEach(function (d) {
         var h = strip(d.hanji);
         var at = h.indexOf(hanQ);

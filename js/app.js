@@ -52,7 +52,7 @@
     TG.app.missing = [];
     var optional = function (p) { return getJSON(p).catch(function () { TG.app.missing.push(p); return null; }); };
     return Promise.all([getJSON("data/dict.json"), getJSON("data/huayu.json"), getJSON("data/chars.json"), getJSON("data/daily.json"),
-      optional("data/synonyms.json"), optional("data/audio.json"), optional("data/proverb_kw.json")])
+      optional("data/synonyms.json"), optional("data/audio.json"), optional("data/proverb_kw.json"), optional("data/lang.json")])
       .then(function (r) {
         D.init(r[0]);
         D.set("huayu", r[1]);
@@ -61,6 +61,7 @@
         if (r[4]) D.set("synonyms", r[4]);
         if (r[5]) D.set("audio", r[5]);
         if (r[6]) D.set("proverbKw", r[6]);
+        if (r[7] && r[7].w) D.set("lang", r[7].w);   // 華語／台語的判斷模型；沒有時退回只看特定字
         notify("dict");
         TG.proverb.init();
         notify("proverb");

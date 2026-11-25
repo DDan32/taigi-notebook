@@ -75,11 +75,14 @@
   if (!report.detectorCatchesInjection) report.problems.push('the DOM scan cannot detect an injected element, so this run proves nothing');
   const positive = (name, ok) => { report.steps[name] = ok; if (!ok) report.problems.push(name + ': the payload never reached the screen, so that step proves nothing'); };
 
-  // 1. converter, every input mode
+  // 1. converter: the button (input type detected automatically), then each reading forced, the way
+  //    the 「也可能是 → 改用這個」 button on a single word does
   TG.app.go('convert');
-  for (const mode of ['auto', 'huayu', 'taigi', 'tailo']) {
-    $$('.modes .chip').find((c) => c.dataset.mode === mode).click();
-    for (const p of PAYLOADS) { set('src-text', p); document.getElementById('go').click(); await sleep(15); }
+  for (const p of PAYLOADS) { set('src-text', p); document.getElementById('go').click(); await sleep(15); }
+  await sleep(60);
+  check('converter/auto');
+  for (const mode of ['huayu', 'taigi', 'tailo']) {
+    for (const p of PAYLOADS) { TG.views.convert.run(p, mode, true); await sleep(15); }
     await sleep(60);
     check('converter/' + mode);
   }
@@ -134,7 +137,6 @@
 
   // 6. correction sheet with hostile custom entries
   TG.app.go('convert');
-  $$('.modes .chip').find((c) => c.dataset.mode === 'huayu').click();
   set('src-text', '我愛你'); document.getElementById('go').click(); await sleep(100);
   for (const p of PAYLOADS) {
     $('#result button.seg').click(); await sleep(40);
